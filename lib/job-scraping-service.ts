@@ -76,29 +76,43 @@ export async function searchJobs(
   }
 
   const allJobs: JobListing[] = [];
-  
-  // Build search query from keywords
-  const query = keywords.join(' ');
   const searchLocation = location || 'United States';
   
-  // Search using SerpAPI Google Jobs
-  try {
-    const jobs = await searchSerpApiJobs(query, searchLocation, maxResults);
+  // Generate multiple broad search queries for more results
+  const searchQueries = generateBroadSearchQueries(keywords);
+  console.log(`Generated ${searchQueries.length} search queries for broader coverage`);
+  
+  // Search with multiple queries to get more jobs
+  const jobsPerQuery = Math.ceil(maxResults / Math.min(searchQueries.length, 5)); // Distribute results across queries
+  
+  for (let i = 0; i < Math.min(searchQueries.length, 5) && allJobs.length < maxResults; i++) {
+    const query = searchQueries[i];
+    console.log(`Searching query ${i + 1}/${Math.min(searchQueries.length, 5)}: "${query}"`);
     
-    // Process each job result
-    for (const serpJob of jobs) {
-      try {
-        const job = await processSerpApiJob(serpJob);
-        if (job) {
-          allJobs.push(job);
+    try {
+      const jobs = await searchSerpApiJobs(query, searchLocation, jobsPerQuery);
+      
+      // Process each job result
+      for (const serpJob of jobs) {
+        try {
+          const job = await processSerpApiJob(serpJob);
+          if (job) {
+            allJobs.push(job);
+          }
+        } catch (error) {
+          console.error('Error processing job:', error);
         }
-      } catch (error) {
-        console.error('Error processing job:', error);
       }
+      
+      // Small delay between requests to avoid rate limiting
+      if (i < Math.min(searchQueries.length, 5) - 1) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+    } catch (error) {
+      console.error(`SerpAPI search error for query "${query}":`, error);
+      // Continue with next query instead of failing completely
+      continue;
     }
-  } catch (error) {
-    console.error('SerpAPI search error:', error);
-    throw error;
   }
 
   // Remove duplicates based on title + company
@@ -106,6 +120,7 @@ export async function searchJobs(
     new Map(allJobs.map(job => [`${job.title}-${job.company}`, job])).values()
   );
 
+  console.log(`Found ${uniqueJobs.length} unique jobs from ${allJobs.length} total results`);
   return uniqueJobs.slice(0, maxResults);
 }
 
@@ -138,6 +153,12 @@ async function searchSerpApiJobs(
   const data: SerpApiResponse = await response.json();
   
   if (data.error) {
+    // Handle "no results" error gracefully - return empty array instead of throwing
+    if (data.error.includes("hasn't returned any results") || data.error.includes("no results")) {
+      console.warn('SerpAPI: No results found for query:', query);
+      return [];
+    }
+    // For other errors, still throw
     throw new Error(`SerpAPI error: ${data.error}`);
   }
 
@@ -321,28 +342,89 @@ function extractSkillsBasic(description: string): string[] {
  */
 export function generateSearchKeywords(profile: {
   skills: {
-    technical: string[];
-    frameworks: string[];
-    tools: string[];
+    technical?: string[] | null;
+    frameworks?: string[] | null;
+    tools?: string[] | null;
   };
-  experience: Array<{
-    title: string;
-    technologies: string[];
-  }>;
+  experience?: Array<{
+    title?: string;
+    technologies?: string[] | null;
+  }> | null;
 }): string[] {
   const keywords = new Set<string>();
 
-  // Add technical skills
-  profile.skills.technical.forEach(skill => keywords.add(skill));
-  profile.skills.frameworks.forEach(framework => keywords.add(framework));
-  profile.skills.tools.forEach(tool => keywords.add(tool));
+  // Add technical skills (with null checks)
+  if (profile.skills?.technical && Array.isArray(profile.skills.technical)) {
+    profile.skills.technical.forEach(skill => {
+      if (skill) keywords.add(skill);
+    });
+  }
+  
+  if (profile.skills?.frameworks && Array.isArray(profile.skills.frameworks)) {
+    profile.skills.frameworks.forEach(framework => {
+      if (framework) keywords.add(framework);
+    });
+  }
+  
+  if (profile.skills?.tools && Array.isArray(profile.skills.tools)) {
+    profile.skills.tools.forEach(tool => {
+      if (tool) keywords.add(tool);
+    });
+  }
 
-  // Add job titles from experience
-  profile.experience.forEach(exp => {
-    keywords.add(exp.title);
-    exp.technologies.forEach(tech => keywords.add(tech));
+  // Add job titles from experience (with null checks)
+  if (profile.experience && Array.isArray(profile.experience)) {
+    profile.experience.forEach(exp => {
+      if (exp?.title) {
+        keywords.add(exp.title);
+      }
+      if (exp?.technologies && Array.isArray(exp.technologies)) {
+        exp.technologies.forEach(tech => {
+          if (tech) keywords.add(tech);
+        });
+      }
+    });
+  }
+
+  // Convert to array - return all keywords for broader search (no limit)
+  return Array.from(keywords);
+}
+
+/**
+ * Generate broad search queries for more job results
+ */
+export function generateBroadSearchQueries(keywords: string[]): string[] {
+  const queries: string[] = [];
+  
+  if (keywords.length === 0) {
+    return ['software engineer', 'developer', 'programmer'];
+  }
+
+  // Get primary skills (top 3 most common)
+  const primarySkills = keywords.slice(0, 3);
+  
+  // Strategy 1: Single primary skill + role
+  primarySkills.forEach(skill => {
+    queries.push(`${skill} developer`);
+    queries.push(`${skill} engineer`);
+    queries.push(`${skill} programmer`);
   });
 
-  // Convert to array and limit
-  return Array.from(keywords).slice(0, 10);
+  // Strategy 2: General role terms (very broad)
+  queries.push('software engineer');
+  queries.push('software developer');
+  queries.push('programmer');
+  queries.push('developer');
+
+  // Strategy 3: Primary skill alone (if it's a common one)
+  if (primarySkills.length > 0) {
+    queries.push(primarySkills[0]);
+  }
+
+  // Strategy 4: Two primary skills combined
+  if (primarySkills.length >= 2) {
+    queries.push(`${primarySkills[0]} ${primarySkills[1]} developer`);
+  }
+
+  return queries;
 }

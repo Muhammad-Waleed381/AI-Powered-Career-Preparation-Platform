@@ -110,27 +110,177 @@ export default function ResumeResultPage() {
             router.push("/login")
             return
         }
-        setUser(JSON.parse(userData))
+        const userObj = JSON.parse(userData)
+        setUser(userObj)
 
-        // Load profile from localStorage
-        const profileData = localStorage.getItem("resumeProfile")
-        if (profileData) {
+        // Try to load profile from multiple sources
+        let profileData = null
+        
+        // First, try resumeProfile (from recent upload)
+        const resumeProfile = localStorage.getItem("resumeProfile")
+        if (resumeProfile) {
             try {
-                setProfile(JSON.parse(profileData))
+                const parsed = JSON.parse(resumeProfile)
+                // Normalize the profile to ensure all arrays are initialized
+                profileData = {
+                    ...parsed,
+                    skills: {
+                        technical: Array.isArray(parsed.skills?.technical) ? parsed.skills.technical : [],
+                        languages: Array.isArray(parsed.skills?.languages) ? parsed.skills.languages : [],
+                        frameworks: Array.isArray(parsed.skills?.frameworks) ? parsed.skills.frameworks : [],
+                        tools: Array.isArray(parsed.skills?.tools) ? parsed.skills.tools : [],
+                        soft: Array.isArray(parsed.skills?.soft) ? parsed.skills.soft : [],
+                    },
+                    experience: Array.isArray(parsed.experience) ? parsed.experience.map((exp: any) => ({
+                        ...exp,
+                        responsibilities: Array.isArray(exp.responsibilities) ? exp.responsibilities : [],
+                        achievements: Array.isArray(exp.achievements) ? exp.achievements : [],
+                        technologies: Array.isArray(exp.technologies) ? exp.technologies : [],
+                    })) : [],
+                    education: Array.isArray(parsed.education) ? parsed.education : [],
+                    certifications: Array.isArray(parsed.certifications) ? parsed.certifications : [],
+                    projects: Array.isArray(parsed.projects) ? parsed.projects : [],
+                    analysis: {
+                        skillProficiency: Array.isArray(parsed.analysis?.skillProficiency) ? parsed.analysis.skillProficiency : [],
+                        topStrengths: Array.isArray(parsed.analysis?.topStrengths) ? parsed.analysis.topStrengths : [],
+                        experienceLevel: parsed.analysis?.experienceLevel || 'mid',
+                        totalYearsExperience: parsed.analysis?.totalYearsExperience || 0,
+                    },
+                }
             } catch (error) {
-                console.error("Error parsing profile:", error)
-                toast.error("Failed to load profile data")
+                console.error("Error parsing resumeProfile:", error)
             }
+        }
+        
+        // If not found, try saved profile by email
+        if (!profileData) {
+            const savedProfile = localStorage.getItem(`profile_${userObj.email}`)
+            if (savedProfile) {
+                try {
+                    const saved = JSON.parse(savedProfile)
+                    // Convert saved profile format to display format and normalize arrays
+                    profileData = {
+                        id: saved.id,
+                        personalInfo: {
+                            name: saved.full_name,
+                            email: saved.email,
+                            phone: saved.phone || '',
+                            location: saved.location || '',
+                            linkedin: saved.linkedin_url,
+                            github: saved.github_url,
+                            portfolio: saved.portfolio_url,
+                        },
+                        summary: saved.summary || '',
+                        skills: {
+                            technical: Array.isArray(saved.skills?.technical) ? saved.skills.technical : [],
+                            languages: Array.isArray(saved.skills?.languages) ? saved.skills.languages : [],
+                            frameworks: Array.isArray(saved.skills?.frameworks) ? saved.skills.frameworks : [],
+                            tools: Array.isArray(saved.skills?.tools) ? saved.skills.tools : [],
+                            soft: Array.isArray(saved.skills?.soft) ? saved.skills.soft : [],
+                        },
+                        experience: Array.isArray(saved.experience) ? saved.experience.map((exp: any) => ({
+                            ...exp,
+                            responsibilities: Array.isArray(exp.responsibilities) ? exp.responsibilities : [],
+                            achievements: Array.isArray(exp.achievements) ? exp.achievements : [],
+                            technologies: Array.isArray(exp.technologies) ? exp.technologies : [],
+                        })) : [],
+                        education: Array.isArray(saved.education) ? saved.education : [],
+                        certifications: Array.isArray(saved.certifications) ? saved.certifications : [],
+                        projects: Array.isArray(saved.projects) ? saved.projects : [],
+                        analysis: {
+                            skillProficiency: Array.isArray(saved.skill_proficiency) ? saved.skill_proficiency : [],
+                            topStrengths: Array.isArray(saved.top_strengths) ? saved.top_strengths : [],
+                            experienceLevel: saved.experience_level || 'mid',
+                            totalYearsExperience: saved.total_years_experience || 0,
+                        },
+                    }
+                } catch (error) {
+                    console.error("Error parsing saved profile:", error)
+                }
+            }
+        }
+
+        if (profileData) {
+            setProfile(profileData)
         } else {
             toast.error("No profile data found. Please upload a resume first.")
             router.push("/dashboard/resume-analysis")
         }
     }, [router])
 
-    const handleSave = () => {
+    const handleSave = async () => {
+        if (!profile || !user) {
+            toast.error("No profile to save")
+            return
+        }
+
         setIsSaved(true)
-        toast.success("Profile saved successfully!")
-        setTimeout(() => setIsSaved(false), 2000)
+        
+        try {
+            // Convert profile to database format
+            const profileData = {
+                email: profile.personalInfo?.email || user.email,
+                full_name: profile.personalInfo?.name || user.name || user.email.split('@')[0],
+                phone: profile.personalInfo?.phone || '',
+                location: profile.personalInfo?.location || '',
+                linkedin_url: profile.personalInfo?.linkedin || undefined,
+                github_url: profile.personalInfo?.github || undefined,
+                portfolio_url: profile.personalInfo?.portfolio || undefined,
+                summary: profile.summary || '',
+                skills: profile.skills || { technical: [], languages: [], frameworks: [], tools: [], soft: [] },
+                experience: profile.experience || [],
+                education: profile.education || [],
+                certifications: profile.certifications || [],
+                projects: profile.projects || [],
+                skill_proficiency: profile.analysis?.skillProficiency || [],
+                top_strengths: profile.analysis?.topStrengths || [],
+                experience_level: profile.analysis?.experienceLevel || 'mid',
+                total_years_experience: profile.analysis?.totalYearsExperience || 0,
+                file_name: 'resume.pdf',
+                file_size: 0,
+            }
+
+            // Save to localStorage with the correct key for job discovery
+            const email = profile.personalInfo?.email || user.email
+            localStorage.setItem(`profile_${email}`, JSON.stringify({
+                ...profileData,
+                id: profile.id || `local_${Date.now()}`,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+            }))
+
+            // Also keep resumeProfile for backward compatibility
+            localStorage.setItem("resumeProfile", JSON.stringify(profile))
+
+            // Try to save to database via API
+            try {
+                const response = await fetch("/api/cv/profile", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(profileData),
+                })
+
+                if (response.ok) {
+                    const data = await response.json()
+                    // Update profile with saved ID
+                    if (data.profile?.id) {
+                        setProfile({ ...profile, id: data.profile.id })
+                    }
+                }
+            } catch (error) {
+                console.error("Error saving to database:", error)
+                // Continue anyway - localStorage save succeeded
+            }
+
+            toast.success("Profile saved successfully!")
+        } catch (error) {
+            console.error("Error saving profile:", error)
+            toast.error("Failed to save profile")
+        } finally {
+            setTimeout(() => setIsSaved(false), 2000)
+        }
     }
 
     const calculateATSScore = (): number => {
@@ -198,7 +348,9 @@ export default function ResumeResultPage() {
 
     const atsScore = calculateATSScore()
     const skillsData = getSkillsRadarData()
-    const topSkills = (profile.analysis?.skillProficiency || []).slice(0, 5)
+    const topSkills = (profile.analysis?.skillProficiency && Array.isArray(profile.analysis.skillProficiency) 
+        ? profile.analysis.skillProficiency 
+        : []).slice(0, 5)
 
     return (
         <SmoothScroll>
@@ -297,10 +449,10 @@ export default function ResumeResultPage() {
 
                                 <div className="space-y-4">
                                     {[
-                                        { label: "Technical", skills: profile.skills?.technical || [] },
-                                        { label: "Frameworks", skills: profile.skills?.frameworks || [] },
-                                        { label: "Tools", skills: profile.skills?.tools || [] },
-                                        { label: "Soft Skills", skills: profile.skills?.soft || [] },
+                                        { label: "Technical", skills: (profile.skills?.technical && Array.isArray(profile.skills.technical)) ? profile.skills.technical : [] },
+                                        { label: "Frameworks", skills: (profile.skills?.frameworks && Array.isArray(profile.skills.frameworks)) ? profile.skills.frameworks : [] },
+                                        { label: "Tools", skills: (profile.skills?.tools && Array.isArray(profile.skills.tools)) ? profile.skills.tools : [] },
+                                        { label: "Soft Skills", skills: (profile.skills?.soft && Array.isArray(profile.skills.soft)) ? profile.skills.soft : [] },
                                     ].map((category) => (
                                         Array.isArray(category.skills) && category.skills.length > 0 && (
                                             <div key={category.label}>
@@ -354,7 +506,7 @@ export default function ResumeResultPage() {
                                                 <p className="text-xs text-muted-foreground font-mono mb-3">
                                                     {exp.startDate} - {exp.endDate} · {exp.location}
                                                 </p>
-                                                {exp.responsibilities.length > 0 && (
+                                                {exp.responsibilities && Array.isArray(exp.responsibilities) && exp.responsibilities.length > 0 && (
                                                     <ul className="space-y-2 text-sm text-muted-foreground">
                                                         {exp.responsibilities.slice(0, 3).map((resp, i) => (
                                                             <li key={i} className="flex items-start gap-2">

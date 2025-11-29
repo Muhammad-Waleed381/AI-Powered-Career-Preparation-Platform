@@ -312,7 +312,7 @@ export default function DashboardPage() {
             <p className="font-mono text-xs tracking-[0.3em] text-muted-foreground mb-6">QUICK ACTIONS</p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { label: "Scan New Jobs", icon: Search, href: "/jobs", desc: "Job scraping" },
+                { label: "Scan New Jobs", icon: Search, href: "/dashboard/job", desc: "Job scraping" },
                 { label: "Analyze Resume", icon: FileSearch, href: "#", desc: "PDF parsing" },
                 { label: "Research Role", icon: Target, href: "#", desc: "AI pipeline" },
                 { label: "View Insights", icon: BarChart3, href: "#", desc: "Analytics" },

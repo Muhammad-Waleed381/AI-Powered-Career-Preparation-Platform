@@ -18,6 +18,7 @@ export default function ResumeAnalysisPage() {
     const [previewUrl, setPreviewUrl] = useState<string>("")
     const [isUploading, setIsUploading] = useState(false)
     const [user, setUser] = useState<{ name: string; email: string } | null>(null)
+    const [hasSavedProfile, setHasSavedProfile] = useState(false)
 
     useEffect(() => {
         const userData = localStorage.getItem("user")
@@ -25,7 +26,16 @@ export default function ResumeAnalysisPage() {
             router.push("/login")
             return
         }
-        setUser(JSON.parse(userData))
+        const userObj = JSON.parse(userData)
+        setUser(userObj)
+
+        // Check if user has a saved profile
+        const savedProfile = localStorage.getItem(`profile_${userObj.email}`)
+        const resumeProfile = localStorage.getItem("resumeProfile")
+        
+        if (savedProfile || resumeProfile) {
+            setHasSavedProfile(true)
+        }
     }, [router])
 
     const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
@@ -121,9 +131,37 @@ export default function ResumeAnalysisPage() {
 
             const data = await response.json()
 
-            // Store profile data in localStorage for result page
+            // Store profile data in localStorage for result page (display format)
             localStorage.setItem("resumeProfile", JSON.stringify(data.profile))
             localStorage.setItem("resumeProfileId", data.profileId)
+
+            // Also save in the format expected by job discovery (database format)
+            const email = data.profile.personalInfo?.email || userObj.email
+            const dbFormatProfile = {
+                id: data.profileId,
+                email: email,
+                full_name: data.profile.personalInfo?.name || email.split('@')[0],
+                phone: data.profile.personalInfo?.phone || '',
+                location: data.profile.personalInfo?.location || '',
+                linkedin_url: data.profile.personalInfo?.linkedin || undefined,
+                github_url: data.profile.personalInfo?.github || undefined,
+                portfolio_url: data.profile.personalInfo?.portfolio || undefined,
+                summary: data.profile.summary || '',
+                skills: data.profile.skills || { technical: [], languages: [], frameworks: [], tools: [], soft: [] },
+                experience: data.profile.experience || [],
+                education: data.profile.education || [],
+                certifications: data.profile.certifications || [],
+                projects: data.profile.projects || [],
+                skill_proficiency: data.profile.analysis?.skillProficiency || [],
+                top_strengths: data.profile.analysis?.topStrengths || [],
+                experience_level: data.profile.analysis?.experienceLevel || 'mid',
+                total_years_experience: data.profile.analysis?.totalYearsExperience || 0,
+                file_name: 'resume.pdf',
+                file_size: 0,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+            }
+            localStorage.setItem(`profile_${email}`, JSON.stringify(dbFormatProfile))
 
             toast.success("Resume analyzed successfully!")
             
@@ -191,6 +229,29 @@ export default function ResumeAnalysisPage() {
                         transition={{ duration: 0.6, delay: 0.2 }}
                         className="max-w-4xl mx-auto"
                     >
+                        {/* Saved Profile Banner */}
+                        {hasSavedProfile && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="mb-6 p-4 bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/30 rounded-lg flex items-center justify-between"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <Check className="w-5 h-5 text-green-400" />
+                                    <div>
+                                        <p className="font-mono text-sm text-foreground">Saved profile found</p>
+                                        <p className="font-mono text-xs text-muted-foreground">You can view your saved profile or upload a new resume</p>
+                                    </div>
+                                </div>
+                                <Link
+                                    href="/dashboard/resume-analysis/result"
+                                    className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 rounded-lg transition-colors font-mono text-xs"
+                                >
+                                    View Profile
+                                </Link>
+                            </motion.div>
+                        )}
+                        
                         {/* Upload Section */}
                         <div className="p-6 border border-white/10 rounded-lg bg-background/30 backdrop-blur-sm mb-6">
                             <div className="flex items-center gap-3 mb-6">

@@ -28,7 +28,7 @@ const menuItems = [
     {
         label: "Job Discovery",
         icon: Briefcase,
-        href: "/dashboard/job-discovery",
+        href: "/dashboard/job",
     },
     {
         label: "Interview Prep",

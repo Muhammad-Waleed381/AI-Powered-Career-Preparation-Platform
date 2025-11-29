@@ -1,18 +1,32 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Upload, FileText, X, Check, AlertCircle } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { useRouter } from "next/navigation"
+import { Upload, FileText, X, Check, AlertCircle, Loader2, ArrowRight } from "lucide-react"
+import { SentientSphere } from "@/components/sentient-sphere"
+import { CustomCursor } from "@/components/custom-cursor"
+import { SmoothScroll } from "@/components/smooth-scroll"
+import { toast } from "sonner"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
 
 export default function ResumeAnalysisPage() {
+    const router = useRouter()
     const [uploadedFile, setUploadedFile] = useState<File | null>(null)
     const [isDragging, setIsDragging] = useState(false)
     const [error, setError] = useState<string>("")
     const [previewUrl, setPreviewUrl] = useState<string>("")
-    const pathname = usePathname()
+    const [isUploading, setIsUploading] = useState(false)
+    const [user, setUser] = useState<{ name: string; email: string } | null>(null)
+
+    useEffect(() => {
+        const userData = localStorage.getItem("user")
+        if (!userData) {
+            router.push("/login")
+            return
+        }
+        setUser(JSON.parse(userData))
+    }, [router])
 
     const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 
@@ -70,10 +84,58 @@ export default function ResumeAnalysisPage() {
 
     const handleDelete = () => {
         setUploadedFile(null)
-        setPreviewUrl("")
-        setError("")
         if (previewUrl) {
             URL.revokeObjectURL(previewUrl)
+        }
+        setPreviewUrl("")
+        setError("")
+    }
+
+    const handleAnalyze = async () => {
+        if (!uploadedFile || !user) return
+
+        setIsUploading(true)
+        setError("")
+
+        try {
+            const formData = new FormData()
+            formData.append("resume", uploadedFile)
+
+            const response = await fetch("/api/cv/upload", {
+                method: "POST",
+                body: formData,
+            })
+
+            // Check if response is actually JSON
+            const contentType = response.headers.get("content-type")
+            if (!contentType || !contentType.includes("application/json")) {
+                const text = await response.text()
+                console.error("Non-JSON response:", text.substring(0, 200))
+                throw new Error(`Server returned ${response.status}: ${response.statusText}. Please check the console for details.`)
+            }
+
+            if (!response.ok) {
+                const errorData = await response.json()
+                throw new Error(errorData.error || errorData.message || "Failed to upload resume")
+            }
+
+            const data = await response.json()
+
+            // Store profile data in localStorage for result page
+            localStorage.setItem("resumeProfile", JSON.stringify(data.profile))
+            localStorage.setItem("resumeProfileId", data.profileId)
+
+            toast.success("Resume analyzed successfully!")
+            
+            // Navigate to results page
+            router.push("/dashboard/resume-analysis/result")
+        } catch (error) {
+            console.error("Upload error:", error)
+            const errorMessage = error instanceof Error ? error.message : "Failed to analyze resume"
+            setError(errorMessage)
+            toast.error(errorMessage)
+        } finally {
+            setIsUploading(false)
         }
     }
 
@@ -83,241 +145,240 @@ export default function ResumeAnalysisPage() {
         return (bytes / (1024 * 1024)).toFixed(1) + " MB"
     }
 
+    if (!user) {
+        return null
+    }
+
     return (
-        <div className="min-h-screen bg-[#050505] p-6 md:p-12">
-            <div className="max-w-5xl mx-auto">
+        <SmoothScroll>
+            <CustomCursor />
+            <div className="relative min-h-screen w-full overflow-hidden bg-[#050505]">
+                {/* 3D Sphere Background */}
+                <div className="absolute inset-0 opacity-20">
+                    <SentientSphere />
+                </div>
+
                 {/* Header */}
-                <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                    className="mb-8"
+                <motion.header
+                    initial={{ y: -100 }}
+                    animate={{ y: 0 }}
+                    transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+                    className="relative z-10 border-b border-white/10 bg-background/40 backdrop-blur-sm"
                 >
-                    <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
-                        Resume Analysis
-                    </h1>
-                    <p className="text-muted-foreground font-mono text-sm">
-                        Upload your resume to get AI-powered insights and recommendations
-                    </p>
-                </motion.div>
-
-                {/* Navigation Buttons */}
-                <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.1 }}
-                    className="mb-8"
-                >
-                    <div className="inline-flex bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-1">
-                        <Link href="/dashboard/resume-analysis">
-                            <button
-                                className={cn(
-                                    "px-6 py-2.5 rounded-md font-mono text-xs tracking-wider transition-all duration-300",
-                                    pathname === "/dashboard/resume-analysis"
-                                        ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg"
-                                        : "text-muted-foreground hover:text-foreground hover:bg-white/5"
-                                )}
+                    <div className="flex items-center justify-between px-6 py-4 md:px-12 md:py-5">
+                        <div className="flex items-center gap-8">
+                            <Link
+                                href="/dashboard"
+                                className="font-mono text-xs tracking-widest text-foreground font-semibold hover:text-purple-400 transition-colors"
                             >
-                                Resume Analysis
-                            </button>
-                        </Link>
-                        <Link href="/dashboard/resume-analysis/result">
-                            <button
-                                className={cn(
-                                    "px-6 py-2.5 rounded-md font-mono text-xs tracking-wider transition-all duration-300",
-                                    pathname === "/dashboard/resume-analysis/result"
-                                        ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg"
-                                        : "text-muted-foreground hover:text-foreground hover:bg-white/5"
-                                )}
-                            >
-                                Result
-                            </button>
-                        </Link>
-                    </div>
-                </motion.div>
-
-                {/* Upload Section */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.1 }}
-                >
-                    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-                                <Upload className="w-5 h-5 text-white" />
-                            </div>
+                                ← DASHBOARD
+                            </Link>
                             <div>
-                                <h2 className="text-xl font-semibold">PDF Upload & Parsing</h2>
-                                <p className="text-xs text-muted-foreground font-mono">
-                                    Step 1: Upload your resume
+                                <h1 className="font-sans text-xl font-light">Resume Analysis</h1>
+                                <p className="font-mono text-xs text-muted-foreground">
+                                    Upload and analyze your resume
                                 </p>
                             </div>
                         </div>
+                    </div>
+                </motion.header>
 
-                        {!uploadedFile ? (
-                            <div>
-                                {/* Drag and Drop Zone */}
-                                <label
-                                    htmlFor="file-upload"
-                                    onDragOver={handleDragOver}
-                                    onDragLeave={handleDragLeave}
-                                    onDrop={handleDrop}
-                                    className={cn(
-                                        "relative block w-full cursor-pointer transition-all duration-300",
-                                        "border-2 border-dashed rounded-xl p-12",
-                                        "hover:border-purple-500/50 hover:bg-white/5",
-                                        isDragging
-                                            ? "border-purple-500 bg-purple-500/10 scale-[1.02]"
-                                            : "border-white/20"
-                                    )}
-                                >
-                                    <input
-                                        id="file-upload"
-                                        type="file"
-                                        accept=".pdf,application/pdf"
-                                        onChange={handleFileInput}
-                                        className="hidden"
-                                    />
-
-                                    <div className="flex flex-col items-center justify-center gap-4">
-                                        <motion.div
-                                            animate={{
-                                                y: isDragging ? -10 : 0,
-                                                scale: isDragging ? 1.1 : 1,
-                                            }}
-                                            transition={{ duration: 0.2 }}
-                                            className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center"
-                                        >
-                                            <Upload className="w-8 h-8 text-purple-400" />
-                                        </motion.div>
-
-                                        <div className="text-center">
-                                            <p className="text-lg font-medium mb-1">
-                                                {isDragging ? "Drop your resume here" : "Upload Resume (PDF)"}
-                                            </p>
-                                            <p className="text-sm text-muted-foreground">
-                                                Drag and drop or click to browse
-                                            </p>
-                                        </div>
-
-                                        <div className="flex items-center gap-4 text-xs text-muted-foreground font-mono">
-                                            <div className="flex items-center gap-1">
-                                                <Check className="w-3 h-3 text-green-500" />
-                                                <span>PDF format</span>
-                                            </div>
-                                            <div className="flex items-center gap-1">
-                                                <Check className="w-3 h-3 text-green-500" />
-                                                <span>Max 10MB</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </label>
-
-                                {/* Error Message */}
-                                <AnimatePresence>
-                                    {error && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: -10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -10 }}
-                                            className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-3"
-                                        >
-                                            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-                                            <p className="text-sm text-red-400">{error}</p>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
+                {/* Main Content */}
+                <div className="relative z-10 px-6 py-8 md:px-12 md:py-12">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.2 }}
+                        className="max-w-4xl mx-auto"
+                    >
+                        {/* Upload Section */}
+                        <div className="p-6 border border-white/10 rounded-lg bg-background/30 backdrop-blur-sm mb-6">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                                    <Upload className="w-5 h-5 text-white" />
+                                </div>
+                                <div>
+                                    <p className="font-mono text-xs tracking-[0.3em] text-muted-foreground mb-1">
+                                        UPLOAD RESUME
+                                    </p>
+                                    <h2 className="font-sans text-xl font-light">PDF Upload & Parsing</h2>
+                                </div>
                             </div>
-                        ) : (
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ duration: 0.3 }}
-                                className="space-y-4"
-                            >
-                                {/* File Preview Card */}
-                                <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-                                    <div className="flex items-start gap-4">
-                                        {/* PDF Thumbnail Preview */}
-                                        <div className="flex-shrink-0 w-24 h-32 bg-white/10 rounded-lg border border-white/20 overflow-hidden">
-                                            {previewUrl ? (
-                                                <iframe
-                                                    src={`${previewUrl}#page=1&view=FitH`}
-                                                    className="w-full h-full pointer-events-none"
-                                                    title="PDF Preview"
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center">
-                                                    <FileText className="w-12 h-12 text-muted-foreground" />
-                                                </div>
-                                            )}
-                                        </div>
 
-                                        {/* File Info */}
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-start justify-between gap-4">
-                                                <div className="flex-1 min-w-0">
-                                                    <h3 className="font-medium truncate mb-1">
-                                                        {uploadedFile.name}
-                                                    </h3>
-                                                    <p className="text-sm text-muted-foreground font-mono">
-                                                        {formatFileSize(uploadedFile.size)}
-                                                    </p>
-                                                    <div className="mt-3 flex items-center gap-2">
-                                                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                                        <span className="text-xs text-green-400 font-mono">
-                                                            Ready for analysis
-                                                        </span>
+                            {!uploadedFile ? (
+                                <div>
+                                    {/* Drag and Drop Zone */}
+                                    <label
+                                        htmlFor="file-upload"
+                                        onDragOver={handleDragOver}
+                                        onDragLeave={handleDragLeave}
+                                        onDrop={handleDrop}
+                                        className={`relative block w-full cursor-pointer transition-all duration-300 border-2 border-dashed rounded-xl p-12 ${
+                                            isDragging
+                                                ? "border-purple-500 bg-purple-500/10 scale-[1.02]"
+                                                : "border-white/20 hover:border-purple-500/50 hover:bg-white/5"
+                                        }`}
+                                    >
+                                        <input
+                                            id="file-upload"
+                                            type="file"
+                                            accept=".pdf,application/pdf"
+                                            onChange={handleFileInput}
+                                            className="hidden"
+                                        />
+
+                                        <div className="flex flex-col items-center justify-center gap-4">
+                                            <motion.div
+                                                animate={{
+                                                    y: isDragging ? -10 : 0,
+                                                    scale: isDragging ? 1.1 : 1,
+                                                }}
+                                                transition={{ duration: 0.2 }}
+                                                className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center"
+                                            >
+                                                <Upload className="w-8 h-8 text-purple-400" />
+                                            </motion.div>
+
+                                            <div className="text-center">
+                                                <p className="text-lg font-medium mb-1">
+                                                    {isDragging ? "Drop your resume here" : "Upload Resume (PDF)"}
+                                                </p>
+                                                <p className="text-sm text-muted-foreground font-mono">
+                                                    Drag and drop or click to browse
+                                                </p>
+                                            </div>
+
+                                            <div className="flex items-center gap-4 text-xs text-muted-foreground font-mono">
+                                                <div className="flex items-center gap-1">
+                                                    <Check className="w-3 h-3 text-green-500" />
+                                                    <span>PDF format</span>
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <Check className="w-3 h-3 text-green-500" />
+                                                    <span>Max 10MB</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </label>
+
+                                    {/* Error Message */}
+                                    <AnimatePresence>
+                                        {error && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: -10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -10 }}
+                                                className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-3"
+                                            >
+                                                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                                                <p className="text-sm text-red-400 font-mono">{error}</p>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            ) : (
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="space-y-4"
+                                >
+                                    {/* File Preview Card */}
+                                    <div className="bg-background/50 border border-white/10 rounded-xl p-6">
+                                        <div className="flex items-start gap-4">
+                                            {/* PDF Thumbnail Preview */}
+                                            <div className="flex-shrink-0 w-24 h-32 bg-white/10 rounded-lg border border-white/20 overflow-hidden">
+                                                {previewUrl ? (
+                                                    <iframe
+                                                        src={`${previewUrl}#page=1&view=FitH`}
+                                                        className="w-full h-full pointer-events-none"
+                                                        title="PDF Preview"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        <FileText className="w-12 h-12 text-muted-foreground" />
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* File Info */}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-start justify-between gap-4">
+                                                    <div className="flex-1 min-w-0">
+                                                        <h3 className="font-medium truncate mb-1">
+                                                            {uploadedFile.name}
+                                                        </h3>
+                                                        <p className="text-sm text-muted-foreground font-mono">
+                                                            {formatFileSize(uploadedFile.size)}
+                                                        </p>
+                                                        <div className="mt-3 flex items-center gap-2">
+                                                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                                            <span className="text-xs text-green-400 font-mono">
+                                                                Ready for analysis
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Action Buttons */}
+                                                    <div className="flex items-center gap-2">
+                                                        <label
+                                                            htmlFor="file-replace"
+                                                            className="px-4 py-2 text-xs font-mono bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors cursor-pointer"
+                                                        >
+                                                            Replace
+                                                            <input
+                                                                id="file-replace"
+                                                                type="file"
+                                                                accept=".pdf,application/pdf"
+                                                                onChange={handleFileInput}
+                                                                className="hidden"
+                                                            />
+                                                        </label>
+                                                        <button
+                                                            onClick={handleDelete}
+                                                            className="p-2 text-red-400 hover:bg-red-500/10 border border-white/10 rounded-lg transition-colors"
+                                                            aria-label="Delete file"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                        </button>
                                                     </div>
                                                 </div>
-
-                                                {/* Action Buttons */}
-                                                <div className="flex items-center gap-2">
-                                                    <label
-                                                        htmlFor="file-replace"
-                                                        className="px-4 py-2 text-xs font-mono bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors cursor-pointer"
-                                                    >
-                                                        Replace
-                                                        <input
-                                                            id="file-replace"
-                                                            type="file"
-                                                            accept=".pdf,application/pdf"
-                                                            onChange={handleFileInput}
-                                                            className="hidden"
-                                                        />
-                                                    </label>
-                                                    <button
-                                                        onClick={handleDelete}
-                                                        className="p-2 text-red-400 hover:bg-red-500/10 border border-white/10 rounded-lg transition-colors"
-                                                        aria-label="Delete file"
-                                                    >
-                                                        <X className="w-4 h-4" />
-                                                    </button>
-                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                {/* Next Steps */}
-                                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20 rounded-xl">
-                                    <p className="text-sm font-mono text-muted-foreground">
-                                        Ready to analyze your resume
-                                    </p>
-                                    <motion.button
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        className="px-6 py-2.5 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg font-mono text-sm font-medium hover:shadow-lg hover:shadow-purple-500/50 transition-shadow"
-                                    >
-                                        Analyze Resume
-                                    </motion.button>
-                                </div>
-                            </motion.div>
-                        )}
-                    </div>
-                </motion.div>
+                                    {/* Analyze Button */}
+                                    <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20 rounded-xl">
+                                        <p className="text-sm font-mono text-muted-foreground">
+                                            Ready to analyze your resume
+                                        </p>
+                                        <motion.button
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            onClick={handleAnalyze}
+                                            disabled={isUploading}
+                                            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg font-mono text-sm font-medium hover:shadow-lg hover:shadow-purple-500/50 transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                                            data-cursor-hover
+                                        >
+                                            {isUploading ? (
+                                                <>
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                    <span>Analyzing...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span>Analyze Resume</span>
+                                                    <ArrowRight className="w-4 h-4" />
+                                                </>
+                                            )}
+                                        </motion.button>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </div>
+                    </motion.div>
+                </div>
             </div>
-        </div>
+        </SmoothScroll>
     )
 }

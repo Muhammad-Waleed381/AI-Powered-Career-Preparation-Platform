@@ -14,13 +14,21 @@ import { createProfile } from '@/lib/resume-db-service';
  */
 export async function POST(request: NextRequest) {
   try {
+    // Ensure we can parse the request
+    if (!request) {
+      return NextResponse.json(
+        { error: 'Invalid request' },
+        { status: 400 }
+      );
+    }
+
     // Parse the form data
     const formData = await request.formData();
-    const file = formData.get('resume') as File;
+    const file = formData.get('resume') as File | null;
 
-    if (!file) {
+    if (!file || !(file instanceof File)) {
       return NextResponse.json(
-        { error: 'No file provided' },
+        { error: 'No file provided or invalid file' },
         { status: 400 }
       );
     }
@@ -40,9 +48,44 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('📄 Processing resume:', file.name);
+    console.log('📄 File size:', file.size, 'bytes');
+    console.log('📄 File type:', file.type);
 
-    // Convert file to buffer
-    const buffer = Buffer.from(await file.arrayBuffer());
+    // Convert file to buffer - CRITICAL: Use arrayBuffer(), not path!
+    // This ensures we're working with the file data directly, not a file path
+    let buffer: Buffer;
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      buffer = Buffer.from(arrayBuffer);
+      
+      if (!buffer || buffer.length === 0) {
+        return NextResponse.json(
+          { error: 'Failed to read file buffer - file appears to be empty' },
+          { status: 400 }
+        );
+      }
+      
+      // Verify it's actually a PDF by checking the PDF header
+      const pdfHeader = buffer.toString('ascii', 0, 4);
+      if (pdfHeader !== '%PDF') {
+        return NextResponse.json(
+          { error: 'Invalid PDF file - file does not appear to be a valid PDF' },
+          { status: 400 }
+        );
+      }
+      
+      console.log('✅ Buffer created:', buffer.length, 'bytes');
+      console.log('✅ PDF header verified:', pdfHeader);
+    } catch (bufferError) {
+      console.error('Buffer creation error:', bufferError);
+      return NextResponse.json(
+        { 
+          error: 'Failed to read file buffer',
+          message: bufferError instanceof Error ? bufferError.message : 'Unknown buffer error'
+        },
+        { status: 400 }
+      );
+    }
 
     // Extract text from PDF
     console.log('📝 Extracting text from PDF...');
@@ -120,12 +163,22 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Resume upload error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error details:', errorMessage);
+    
+    // Always return JSON, never HTML
     return NextResponse.json(
       {
         error: 'Failed to process resume',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : undefined) : undefined,
       },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
     );
   }
 }

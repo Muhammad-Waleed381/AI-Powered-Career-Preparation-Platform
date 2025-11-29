@@ -20,20 +20,20 @@ export function Navbar() {
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY
-      
+
       // Show navbar at the top (within 50px)
       if (currentScrollY < 50) {
         setIsVisible(true)
-      } 
+      }
       // Hide when scrolling down, show when scrolling up
       else if (currentScrollY > lastScrollY && currentScrollY > 100) {
         setIsVisible(false)
-      } 
+      }
       // Show when scrolling up
       else if (currentScrollY < lastScrollY) {
         setIsVisible(true)
       }
-      
+
       setLastScrollY(currentScrollY)
     }
 
@@ -53,7 +53,7 @@ export function Navbar() {
     <>
       <motion.header
         initial={{ y: -100 }}
-        animate={{ 
+        animate={{
           y: isVisible ? 0 : -100,
         }}
         transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
@@ -162,7 +162,7 @@ export function Navbar() {
                   {link.label}
                 </motion.button>
               ))}
-              
+
               {/* Mobile Sign In Button */}
               <Link href="/login" onClick={() => setIsMenuOpen(false)}>
                 <motion.button

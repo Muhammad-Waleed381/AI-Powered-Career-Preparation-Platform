@@ -1,15 +1,20 @@
 /**
- * AI Service - OpenRouter Integration
- * Uses free Gemini 2.0 Flash model for interview prep analysis
+ * AI Service - Groq Integration
+ * Uses Llama 3.1 70B model via Groq's fast inference platform
+ * Free tier with excellent performance
  */
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
-const FREE_MODEL = 'google/gemini-2.0-flash-exp:free';
+import Groq from 'groq-sdk';
 
-export interface AIMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const MODEL_NAME = 'llama-3.3-70b-versatile'; // Current free tier model
+
+// Initialize Groq client
+function getGroqClient() {
+  if (!GROQ_API_KEY) {
+    throw new Error('GROQ_API_KEY is not set in environment variables');
+  }
+  return new Groq({ apiKey: GROQ_API_KEY });
 }
 
 export interface AIResponse {
@@ -18,41 +23,24 @@ export interface AIResponse {
 }
 
 /**
- * Call OpenRouter API with the free Gemini model
+ * Call Groq API
  */
-async function callOpenRouter(messages: AIMessage[]): Promise<AIResponse> {
-  if (!OPENROUTER_API_KEY) {
-    throw new Error('OPENROUTER_API_KEY is not set in environment variables');
-  }
-
+async function callGroq(messages: Array<{role: string; content: string}>): Promise<AIResponse> {
   try {
-    const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-        'X-Title': 'AI Career Preparation Platform',
-      },
-      body: JSON.stringify({
-        model: FREE_MODEL,
-        messages,
-        temperature: 0.7,
-        max_tokens: 4000,
-      }),
+    const groq = getGroqClient();
+    
+    const completion = await groq.chat.completions.create({
+      model: MODEL_NAME,
+      messages: messages as any,
+      temperature: 0.7,
+      max_tokens: 4096,
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`OpenRouter API error: ${errorData.error?.message || response.statusText}`);
-    }
-
-    const data = await response.json();
     return {
-      content: data.choices[0]?.message?.content || '',
+      content: completion.choices[0]?.message?.content || '',
     };
   } catch (error) {
-    console.error('OpenRouter API Error:', error);
+    console.error('Groq API Error:', error);
     return {
       content: '',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -67,11 +55,14 @@ export async function analyzeContent(
   searchResults: string,
   context: { company: string; role: string; technologies: string[] }
 ): Promise<{ relevantPoints: string[]; insights: string }> {
-  const systemPrompt = `You are an expert career coach analyzing web search results for interview preparation.
-Your task is to extract ONLY relevant, recent, and accurate information.
-Filter out: ads, outdated content (>1 year old), irrelevant information, promotional content.`;
-
-  const userPrompt = `Company: ${context.company}
+  const response = await callGroq([
+    {
+      role: 'system',
+      content: 'You are an expert career coach analyzing web search results for interview preparation. Extract ONLY relevant, recent, and accurate information. Filter out ads, outdated content, and promotional material.'
+    },
+    {
+      role: 'user',
+      content: `Company: ${context.company}
 Role: ${context.role}
 Technologies: ${context.technologies.join(', ')}
 
@@ -80,19 +71,16 @@ ${searchResults}
 
 Task:
 1. Extract 5-10 key relevant points about the company, role, or technologies
-2. Identify any recent updates or trends (last 12 months)
-3. Note any important technical requirements or expectations
-4. Filter out outdated or irrelevant information
+2. Identify recent updates or trends (last 12 months)
+3. Note important technical requirements
+4. Filter out outdated information
 
-Return as JSON:
+Return ONLY valid JSON (no markdown, no explanations):
 {
   "relevantPoints": ["point 1", "point 2", ...],
-  "insights": "brief summary of key findings"
-}`;
-
-  const response = await callOpenRouter([
-    { role: 'system', content: systemPrompt },
-    { role: 'user', content: userPrompt },
+  "insights": "brief summary"
+}`
+    }
   ]);
 
   if (response.error) {
@@ -101,7 +89,6 @@ Return as JSON:
   }
 
   try {
-    // Extract JSON from response (handle markdown code blocks if present)
     let jsonText = response.content.trim();
     if (jsonText.includes('```json')) {
       jsonText = jsonText.split('```json')[1].split('```')[0].trim();
@@ -114,7 +101,7 @@ Return as JSON:
   } catch (error) {
     console.error('Error parsing AI response:', error);
     return {
-      relevantPoints: [response.content],
+      relevantPoints: [response.content.substring(0, 200)],
       insights: 'Analysis completed but formatting error occurred',
     };
   }
@@ -135,10 +122,14 @@ export async function synthesizeResearch(data: {
   techInsights: any[];
   preparationChecklist: any;
 }> {
-  const systemPrompt = `You are an expert interview preparation coach.
-Create comprehensive, actionable interview preparation insights based on research data.`;
-
-  const userPrompt = `Company: ${data.company}
+  const response = await callGroq([
+    {
+      role: 'system',
+      content: 'You are an expert interview preparation coach. Create comprehensive, actionable interview preparation insights.'
+    },
+    {
+      role: 'user',
+      content: `Company: ${data.company}
 Role: ${data.role}
 Technologies: ${data.technologies.join(', ')}
 
@@ -148,38 +139,35 @@ ${data.companyInfo}
 Technology Research:
 ${data.techInfo}
 
-Create a comprehensive interview preparation guide as JSON:
+Create a comprehensive interview preparation guide. Return ONLY valid JSON (no markdown):
 {
   "companyInsights": {
-    "culture": ["cultural value 1", "cultural value 2", ...],
-    "values": ["company value 1", "company value 2", ...],
-    "practices": ["engineering practice 1", "practice 2", ...],
-    "recentNews": ["recent update 1", "update 2", ...]
+    "culture": ["value 1", "value 2", "value 3"],
+    "values": ["value 1", "value 2", "value 3"],
+    "practices": ["practice 1", "practice 2", "practice 3"],
+    "recentNews": ["update 1", "update 2", "update 3"]
   },
   "roleInsights": {
-    "keyResponsibilities": ["responsibility 1", "responsibility 2", ...],
-    "requiredSkills": ["skill 1", "skill 2", ...],
-    "experienceLevel": "junior/mid/senior",
-    "focusAreas": ["area 1", "area 2", ...]
+    "keyResponsibilities": ["resp 1", "resp 2", "resp 3"],
+    "requiredSkills": ["skill 1", "skill 2", "skill 3"],
+    "experienceLevel": "mid",
+    "focusAreas": ["area 1", "area 2", "area 3"]
   },
   "techInsights": [
     {
-      "technology": "tech name",
+      "technology": "${data.technologies[0] || 'JavaScript'}",
       "recentUpdates": ["update 1", "update 2"],
       "bestPractices": ["practice 1", "practice 2"],
       "commonChallenges": ["challenge 1", "challenge 2"]
     }
   ],
   "preparationChecklist": {
-    "priorityTopics": ["topic 1", "topic 2", ...],
-    "studyTimeline": "suggested timeline",
-    "resources": ["resource 1", "resource 2", ...]
+    "priorityTopics": ["topic 1", "topic 2", "topic 3"],
+    "studyTimeline": "2-3 weeks",
+    "resources": ["resource 1", "resource 2"]
   }
-}`;
-
-  const response = await callOpenRouter([
-    { role: 'system', content: systemPrompt },
-    { role: 'user', content: userPrompt },
+}`
+    }
   ]);
 
   if (response.error) {
@@ -208,15 +196,18 @@ export async function generateTechnicalQuestions(
   insights: any,
   technologies: string[]
 ): Promise<any[]> {
-  const systemPrompt = `You are an expert technical interviewer.
-Generate realistic, challenging interview questions based on the role and technologies.
-Mix difficulty levels and question types (coding, system design, theoretical).`;
-
-  const userPrompt = `Technologies: ${technologies.join(', ')}
+  const response = await callGroq([
+    {
+      role: 'system',
+      content: 'You are an expert technical interviewer. Generate realistic, challenging interview questions.'
+    },
+    {
+      role: 'user',
+      content: `Technologies: ${technologies.join(', ')}
 Role Level: ${insights.experienceLevel || 'mid'}
 Focus Areas: ${insights.focusAreas?.join(', ') || 'general'}
 
-Generate 10-15 technical interview questions as JSON array:
+Generate 10 technical interview questions. Return ONLY valid JSON array:
 [
   {
     "question": "detailed question text",
@@ -226,15 +217,8 @@ Generate 10-15 technical interview questions as JSON array:
   }
 ]
 
-Requirements:
-- Cover all main technologies
-- Mix difficulty levels appropriately
-- Include practical scenarios
-- Be specific and realistic`;
-
-  const response = await callOpenRouter([
-    { role: 'system', content: systemPrompt },
-    { role: 'user', content: userPrompt },
+Cover: algorithms, system design, and ${technologies.join(', ')}. Mix difficulty levels.`
+    }
   ]);
 
   if (response.error) {
@@ -264,32 +248,29 @@ export async function generateBehavioralQuestions(
   companyInsights: any,
   roleInsights: any
 ): Promise<any[]> {
-  const systemPrompt = `You are an expert behavioral interviewer.
-Generate questions that assess culture fit, leadership, teamwork, and soft skills.`;
-
-  const userPrompt = `Company Values: ${companyInsights.values?.join(', ') || 'innovation, teamwork'}
+  const response = await callGroq([
+    {
+      role: 'system',
+      content: 'You are an expert behavioral interviewer. Generate questions that assess culture fit, leadership, and soft skills.'
+    },
+    {
+      role: 'user',
+      content: `Company Values: ${companyInsights.values?.join(', ') || 'innovation, teamwork'}
 Company Culture: ${companyInsights.culture?.join(', ') || 'collaborative, fast-paced'}
 Role Level: ${roleInsights.experienceLevel || 'mid'}
 
-Generate 5-8 behavioral interview questions as JSON array:
+Generate 6 behavioral interview questions. Return ONLY valid JSON array:
 [
   {
-    "question": "detailed STAR-format question",
+    "question": "STAR-format question",
     "difficulty": "junior|mid|senior",
     "category": "culture_fit|leadership|teamwork|problem_solving",
-    "hints": ["what they're looking for", "key points to mention"]
+    "hints": ["what they look for", "key points"]
   }
 ]
 
-Requirements:
-- Align with company values
-- Use STAR format prompts
-- Cover different competencies
-- Be realistic and specific`;
-
-  const response = await callOpenRouter([
-    { role: 'system', content: systemPrompt },
-    { role: 'user', content: userPrompt },
+Use STAR format. Cover: culture fit, leadership, teamwork, problem-solving.`
+    }
   ]);
 
   if (response.error) {

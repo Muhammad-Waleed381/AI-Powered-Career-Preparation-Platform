@@ -1,1 +1,9 @@
 node_modules/
+.next/
+build/
+dist/
+.vercel
+.turbo
+*.log
+.env
+.env.local

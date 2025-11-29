@@ -6,31 +6,65 @@ import { useRouter } from "next/navigation"
 import { SentientSphere } from "@/components/sentient-sphere"
 import { CustomCursor } from "@/components/custom-cursor"
 import { SmoothScroll } from "@/components/smooth-scroll"
-import { 
-  BookOpen, 
-  Users, 
-  FileText, 
-  Calendar, 
-  BarChart3, 
+import { JobMatchDonut } from "@/components/charts/job-match-donut"
+import { SkillsRadar } from "@/components/charts/skills-radar"
+import { ApplicationProgress } from "@/components/charts/application-progress"
+import { MatchTrendChart } from "@/components/charts/match-trend-chart"
+import {
+  Briefcase,
+  Calendar,
+  TrendingUp,
   LogOut,
   Bell,
   Settings,
-  GraduationCap
+  Target,
+  FileSearch,
+  Search,
+  BarChart3,
+  CheckCircle2
 } from "lucide-react"
 import Link from "next/link"
 
-const stats = [
-  { label: "Total Students", value: "1,234", icon: Users, change: "+12%" },
-  { label: "Active Courses", value: "24", icon: BookOpen, change: "+3" },
-  { label: "Assignments", value: "156", icon: FileText, change: "+8" },
-  { label: "Upcoming Events", value: "7", icon: Calendar, change: "2 this week" },
+const jobActivities = [
+  {
+    id: 1,
+    title: "Senior Developer - Google",
+    subtitle: "92% match",
+    time: "Sep 08",
+    status: "applied",
+    icon: CheckCircle2
+  },
+  {
+    id: 2,
+    title: "Research Completed - Amazon",
+    subtitle: "12 questions ready",
+    time: "Sep 07",
+    status: "research",
+    icon: FileSearch
+  },
+  {
+    id: 3,
+    title: "Frontend Engineer - Meta",
+    subtitle: "85% match",
+    time: "Sep 07",
+    status: "saved",
+    icon: Briefcase
+  },
+  {
+    id: 4,
+    title: "Skills Updated - React Advanced",
+    subtitle: "+5% match score",
+    time: "Sep 06",
+    status: "skill",
+    icon: TrendingUp
+  },
 ]
 
-const recentActivities = [
-  { id: 1, type: "assignment", title: "Math Assignment Submitted", time: "2 hours ago", student: "John Doe" },
-  { id: 2, type: "course", title: "New Course Created: Web Development", time: "5 hours ago", student: "Admin" },
-  { id: 3, type: "student", title: "New Student Registered", time: "1 day ago", student: "Jane Smith" },
-  { id: 4, type: "assignment", title: "Physics Quiz Graded", time: "2 days ago", student: "Mike Johnson" },
+const weeklyProgress = [
+  { label: "Applications", value: 12, max: 20, color: "purple" },
+  { label: "Interviews", value: 3, max: 5, color: "blue" },
+  { label: "Research", value: 5, max: 10, color: "green" },
+  { label: "Skills Improved", value: 2, max: 3, color: "orange" },
 ]
 
 export default function DashboardPage() {
@@ -73,9 +107,29 @@ export default function DashboardPage() {
           className="relative z-10 border-b border-white/10 bg-background/40 backdrop-blur-sm"
         >
           <div className="flex items-center justify-between px-6 py-4 md:px-12 md:py-5">
-            <div className="flex items-center gap-3">
-              <GraduationCap className="w-6 h-6 text-accent" />
-              <span className="font-mono text-xs tracking-widest text-muted-foreground">EDUPLATFORM</span>
+            <div className="flex items-center gap-8">
+              <div className="flex items-center gap-3">
+                <Target className="w-6 h-6 text-accent" />
+                <span className="font-mono text-xs tracking-widest text-foreground font-semibold">JOBMATCHER</span>
+              </div>
+
+              {/* Header Stats */}
+              <div className="hidden md:flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs text-muted-foreground">Applications:</span>
+                  <span className="font-mono text-sm text-foreground font-medium">42</span>
+                </div>
+                <div className="h-4 w-px bg-white/10" />
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs text-muted-foreground">Interviews:</span>
+                  <span className="font-mono text-sm text-foreground font-medium">8</span>
+                </div>
+                <div className="h-4 w-px bg-white/10" />
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs text-muted-foreground">Match Score:</span>
+                  <span className="font-mono text-sm text-purple-400 font-medium">87%</span>
+                </div>
+              </div>
             </div>
 
             <div className="flex items-center gap-4">
@@ -115,114 +169,153 @@ export default function DashboardPage() {
           >
             <p className="font-mono text-xs tracking-[0.3em] text-muted-foreground mb-2">DASHBOARD</p>
             <h1 className="font-sans text-4xl md:text-5xl font-light tracking-tight mb-2">
-              Welcome back, <span className="italic">{user.name || "User"}</span>
+              Welcome, <span className="italic">{user.name || "Daniel"}</span>!
             </h1>
             <p className="font-mono text-sm text-muted-foreground">
-              Here's what's happening with your education platform today.
+              Your career preparation dashboard - track applications, improve skills, and land your dream job.
             </p>
           </motion.div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {stats.map((stat, index) => {
-              const Icon = stat.icon
-              return (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.3 + index * 0.1 }}
-                  className="relative p-6 border border-white/10 rounded-lg bg-background/30 backdrop-blur-sm hover:bg-background/50 transition-all duration-300 group"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="p-3 rounded-lg border border-white/10 bg-background/50">
-                      <Icon className="w-5 h-5 text-accent" />
-                    </div>
-                    <span className="font-mono text-xs text-muted-foreground">{stat.change}</span>
-                  </div>
-                  <h3 className="font-sans text-3xl font-light mb-1">{stat.value}</h3>
-                  <p className="font-mono text-xs tracking-wider text-muted-foreground">{stat.label}</p>
-                  <div className="absolute inset-0 border border-white/0 group-hover:border-white/10 rounded-lg transition-colors duration-300" />
-                </motion.div>
-              )
-            })}
-          </div>
-
-          {/* Charts and Activities Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Chart Section */}
+          {/* Main Stats Area - 3 Charts */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.7 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="relative p-6 border border-white/10 rounded-lg bg-background/30 backdrop-blur-sm"
+            >
+              <JobMatchDonut score={87} />
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="relative p-6 border border-white/10 rounded-lg bg-background/30 backdrop-blur-sm"
+            >
+              <ApplicationProgress current={42} goal={100} />
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              className="relative p-6 border border-white/10 rounded-lg bg-background/30 backdrop-blur-sm"
+            >
+              <SkillsRadar />
+            </motion.div>
+          </div>
+
+          {/* Job Activity and Progress Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
+            {/* Job Activity */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
               className="lg:col-span-2 p-6 border border-white/10 rounded-lg bg-background/30 backdrop-blur-sm"
             >
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <p className="font-mono text-xs tracking-[0.3em] text-muted-foreground mb-2">ANALYTICS</p>
-                  <h2 className="font-sans text-2xl font-light">Performance Overview</h2>
+                  <p className="font-mono text-xs tracking-[0.3em] text-muted-foreground mb-2">RECENT</p>
+                  <h2 className="font-sans text-2xl font-light">Job Activity</h2>
                 </div>
-                <BarChart3 className="w-6 h-6 text-muted-foreground" />
+                <Briefcase className="w-6 h-6 text-muted-foreground" />
               </div>
-              
-              {/* Placeholder Chart */}
-              <div className="h-64 flex items-center justify-center border border-white/10 rounded-lg bg-background/20">
-                <div className="text-center">
-                  <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-                  <p className="font-mono text-xs text-muted-foreground">Chart visualization</p>
-                </div>
+
+              <div className="space-y-3">
+                {jobActivities.map((activity, index) => {
+                  const Icon = activity.icon
+                  return (
+                    <motion.div
+                      key={activity.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.4, delay: 0.7 + index * 0.1 }}
+                      className="flex items-center gap-4 p-4 border border-white/5 rounded-lg hover:bg-background/20 transition-colors group"
+                    >
+                      <div className="p-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                        <Icon className="w-4 h-4 text-purple-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-sans text-sm font-light truncate">{activity.title}</h4>
+                        <p className="font-mono text-xs text-muted-foreground">{activity.subtitle}</p>
+                      </div>
+                      <span className="font-mono text-[10px] text-muted-foreground whitespace-nowrap">
+                        {activity.time}
+                      </span>
+                    </motion.div>
+                  )
+                })}
               </div>
             </motion.div>
 
-            {/* Recent Activities */}
+            {/* Weekly Progress Metrics */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.8 }}
+              transition={{ duration: 0.6, delay: 0.7 }}
               className="p-6 border border-white/10 rounded-lg bg-background/30 backdrop-blur-sm"
             >
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <p className="font-mono text-xs tracking-[0.3em] text-muted-foreground mb-2">ACTIVITY</p>
-                  <h2 className="font-sans text-2xl font-light">Recent</h2>
+                  <p className="font-mono text-xs tracking-[0.3em] text-muted-foreground mb-2">THIS WEEK</p>
+                  <h2 className="font-sans text-2xl font-light">Progress</h2>
                 </div>
-                <Bell className="w-5 h-5 text-muted-foreground" />
+                <BarChart3 className="w-5 h-5 text-muted-foreground" />
               </div>
 
               <div className="space-y-4">
-                {recentActivities.map((activity, index) => (
+                {weeklyProgress.map((item, index) => (
                   <motion.div
-                    key={activity.id}
+                    key={item.label}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: 0.9 + index * 0.1 }}
-                    className="p-4 border border-white/5 rounded-lg hover:bg-background/20 transition-colors"
+                    transition={{ duration: 0.4, delay: 0.8 + index * 0.1 }}
                   >
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-sans text-sm font-light">{activity.title}</h4>
-                      <span className="font-mono text-[10px] text-muted-foreground">{activity.time}</span>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-mono text-xs text-muted-foreground">{item.label}</span>
+                      <span className="font-mono text-xs text-foreground">
+                        {item.value}/{item.max}
+                      </span>
                     </div>
-                    <p className="font-mono text-xs text-muted-foreground">{activity.student}</p>
+                    <div className="h-2 bg-background/50 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(item.value / item.max) * 100}%` }}
+                        transition={{ duration: 1, delay: 0.9 + index * 0.1 }}
+                        className="h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full"
+                      />
+                    </div>
                   </motion.div>
                 ))}
               </div>
             </motion.div>
           </div>
 
+          {/* Application Trend Chart */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 1.1 }}
+            className="p-6 border border-white/10 rounded-lg bg-background/30 backdrop-blur-sm mb-12"
+          >
+            <MatchTrendChart />
+          </motion.div>
+
           {/* Quick Actions */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 1.2 }}
-            className="mt-12"
           >
             <p className="font-mono text-xs tracking-[0.3em] text-muted-foreground mb-6">QUICK ACTIONS</p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { label: "Add Course", icon: BookOpen, href: "#" },
-                { label: "Manage Students", icon: Users, href: "#" },
-                { label: "Create Assignment", icon: FileText, href: "#" },
-                { label: "View Calendar", icon: Calendar, href: "#" },
+                { label: "Scan New Jobs", icon: Search, href: "#", desc: "Job scraping" },
+                { label: "Analyze Resume", icon: FileSearch, href: "#", desc: "PDF parsing" },
+                { label: "Research Role", icon: Target, href: "#", desc: "AI pipeline" },
+                { label: "View Insights", icon: BarChart3, href: "#", desc: "Analytics" },
               ].map((action, index) => {
                 const Icon = action.icon
                 return (
@@ -233,12 +326,17 @@ export default function DashboardPage() {
                       whileTap={{ scale: 0.95 }}
                       className="w-full p-6 border border-white/10 rounded-lg bg-background/30 backdrop-blur-sm hover:bg-background/50 transition-all duration-300 flex flex-col items-center gap-3 group"
                     >
-                      <div className="p-3 rounded-lg border border-white/10 bg-background/50 group-hover:border-accent transition-colors">
-                        <Icon className="w-5 h-5 text-muted-foreground group-hover:text-accent transition-colors" />
+                      <div className="p-3 rounded-lg border border-white/10 bg-background/50 group-hover:border-purple-500/50 transition-colors">
+                        <Icon className="w-5 h-5 text-muted-foreground group-hover:text-purple-400 transition-colors" />
                       </div>
-                      <span className="font-mono text-xs tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
-                        {action.label}
-                      </span>
+                      <div className="text-center">
+                        <span className="font-mono text-xs tracking-wider text-muted-foreground group-hover:text-foreground transition-colors block">
+                          {action.label}
+                        </span>
+                        <span className="font-mono text-[10px] text-muted-foreground/50 block mt-1">
+                          {action.desc}
+                        </span>
+                      </div>
                     </motion.button>
                   </Link>
                 )

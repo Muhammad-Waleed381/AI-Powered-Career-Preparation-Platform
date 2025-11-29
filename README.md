@@ -187,3 +187,6 @@ Follow the contribution guidelines to help maintain consistency.
 
 ##Tools Used:
 Antigravity, v0 free version, replit free version,chatgpt,gemini,claude
+
+## Collaborators
+Names: Muhammad Waleed, Faseeh, Abdul Rafay, Muhammad Muhad

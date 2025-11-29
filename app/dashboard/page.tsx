@@ -24,6 +24,8 @@ import {
   CheckCircle2
 } from "lucide-react"
 import Link from "next/link"
+import { createClient } from "@/lib/supabase/client"
+import { User } from "@supabase/supabase-js"
 
 const jobActivities = [
   {
@@ -69,21 +71,50 @@ const weeklyProgress = [
 
 export default function DashboardPage() {
   const router = useRouter()
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null)
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check if user is logged in
-    const userData = localStorage.getItem("user")
-    if (!userData) {
-      router.push("/login")
-      return
+    const checkUser = async () => {
+      const supabase = createClient()
+      const { data: { user }, error } = await supabase.auth.getUser()
+      
+      if (error || !user) {
+        router.push("/login")
+      } else {
+        setUser(user)
+      }
+      setLoading(false)
     }
-    setUser(JSON.parse(userData))
+
+    checkUser()
   }, [router])
 
-  const handleLogout = () => {
-    localStorage.removeItem("user")
+  const handleLogout = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
     router.push("/login")
+  }
+
+  const getUserName = () => {
+    if (!user) return ""
+    // Prioritize full name from metadata
+    if (user.user_metadata?.full_name) {
+      return user.user_metadata.full_name
+    }
+    // Fallback to email prefix
+    if (user.email) {
+      return user.email.split('@')[0]
+    }
+    return "User"
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-accent"></div>
+      </div>
+    )
   }
 
   if (!user) {
@@ -169,7 +200,7 @@ export default function DashboardPage() {
           >
             <p className="font-mono text-xs tracking-[0.3em] text-muted-foreground mb-2">DASHBOARD</p>
             <h1 className="font-sans text-4xl md:text-5xl font-light tracking-tight mb-2">
-              Welcome, <span className="italic">{user.name || "Daniel"}</span>!
+              Welcome, <span className="italic">{getUserName()}</span>!
             </h1>
             <p className="font-mono text-sm text-muted-foreground">
               Your career preparation dashboard - track applications, improve skills, and land your dream job.
@@ -348,4 +379,3 @@ export default function DashboardPage() {
     </SmoothScroll>
   )
 }
-

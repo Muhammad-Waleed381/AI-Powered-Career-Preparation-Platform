@@ -10,6 +10,7 @@ import { Navbar } from "@/components/navbar"
 import { CustomCursor } from "@/components/custom-cursor"
 import { SmoothScroll } from "@/components/smooth-scroll"
 import { ArrowRight } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 
 export default function SignInPage() {
   const [formData, setFormData] = useState({
@@ -19,14 +20,40 @@ export default function SignInPage() {
     confirmPassword: "",
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    // Handle sign in logic here
-    setTimeout(() => {
+    setError("")
+    setSuccess(false)
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match")
       setIsLoading(false)
-    }, 1000)
+      return
+    }
+
+    const supabase = createClient()
+    const { error } = await supabase.auth.signUp({
+      email: formData.email,
+      password: formData.password,
+      options: {
+        emailRedirectTo: `${location.origin}/auth/callback`,
+        data: {
+            full_name: formData.name
+        }
+      },
+    })
+
+    if (error) {
+      setError(error.message)
+      setIsLoading(false)
+    } else {
+      setSuccess(true)
+      setIsLoading(false)
+    }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,6 +184,30 @@ export default function SignInPage() {
                   placeholder="Confirm your password"
                 />
               </div>
+
+              {/* Error Message */}
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-4 border border-destructive/20 rounded-lg bg-destructive/10"
+                >
+                  <p className="font-mono text-xs text-destructive">{error}</p>
+                </motion.div>
+              )}
+
+              {/* Success Message */}
+              {success && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-4 border border-green-500/20 rounded-lg bg-green-500/10"
+                >
+                  <p className="font-mono text-xs text-green-500">
+                    Registration successful! Please check your email to confirm your account.
+                  </p>
+                </motion.div>
+              )}
 
               {/* Submit Button */}
               <motion.button

@@ -4,6 +4,8 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
+import { User } from "@supabase/supabase-js"
 
 const navLinks = [
   { label: "Features", href: "#features" },
@@ -15,7 +17,23 @@ export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isVisible, setIsVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
+  const [user, setUser] = useState<User | null>(null)
   const router = useRouter()
+
+  useEffect(() => {
+    const supabase = createClient()
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+    }
+    getUser()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -47,6 +65,13 @@ export function Navbar() {
     if (element) {
       element.scrollIntoView({ behavior: "smooth" })
     }
+  }
+
+  const handleSignOut = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push("/")
+    router.refresh()
   }
 
   return (
@@ -102,17 +127,38 @@ export function Navbar() {
               <span className="font-mono text-xs tracking-wider text-muted-foreground">LIVE NOW</span>
             </div>
 
-            {/* Sign In Button */}
-            <Link href="/login">
-              <motion.button
-                data-cursor-hover
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="relative px-6 py-2.5 border border-white/20 rounded-full font-mono text-xs tracking-widest uppercase bg-transparent backdrop-blur-sm hover:bg-white hover:text-black transition-colors duration-500"
-              >
-                Sign In
-              </motion.button>
-            </Link>
+            {/* Sign In / Dashboard Button */}
+            {user ? (
+              <div className="flex items-center gap-4">
+                <Link href="/dashboard">
+                  <motion.button
+                    data-cursor-hover
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="relative px-6 py-2.5 border border-white/20 rounded-full font-mono text-xs tracking-widest uppercase bg-transparent backdrop-blur-sm hover:bg-white hover:text-black transition-colors duration-500"
+                  >
+                    Dashboard
+                  </motion.button>
+                </Link>
+                <button
+                  onClick={handleSignOut}
+                  className="font-mono text-xs tracking-wider text-muted-foreground hover:text-foreground transition-colors duration-300"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <Link href="/login">
+                <motion.button
+                  data-cursor-hover
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="relative px-6 py-2.5 border border-white/20 rounded-full font-mono text-xs tracking-widest uppercase bg-transparent backdrop-blur-sm hover:bg-white hover:text-black transition-colors duration-500"
+                >
+                  Sign In
+                </motion.button>
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -163,18 +209,43 @@ export function Navbar() {
                 </motion.button>
               ))}
 
-              {/* Mobile Sign In Button */}
-              <Link href="/login" onClick={() => setIsMenuOpen(false)}>
-                <motion.button
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 20 }}
-                  transition={{ delay: 0.3 }}
-                  className="px-8 py-3 border border-white/20 rounded-full font-mono text-sm tracking-widest uppercase bg-transparent hover:bg-white hover:text-black transition-colors duration-500 mt-4"
-                >
-                  Sign In
-                </motion.button>
-              </Link>
+              {/* Mobile Sign In / Dashboard Button */}
+              {user ? (
+                <>
+                  <Link href="/dashboard" onClick={() => setIsMenuOpen(false)}>
+                    <motion.button
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 20 }}
+                      transition={{ delay: 0.3 }}
+                      className="px-8 py-3 border border-white/20 rounded-full font-mono text-sm tracking-widest uppercase bg-transparent hover:bg-white hover:text-black transition-colors duration-500 mt-4"
+                    >
+                      Dashboard
+                    </motion.button>
+                  </Link>
+                  <button
+                    onClick={() => {
+                      handleSignOut()
+                      setIsMenuOpen(false)
+                    }}
+                    className="font-mono text-sm tracking-widest uppercase text-muted-foreground hover:text-foreground transition-colors duration-300 mt-4"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <Link href="/login" onClick={() => setIsMenuOpen(false)}>
+                  <motion.button
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    transition={{ delay: 0.3 }}
+                    className="px-8 py-3 border border-white/20 rounded-full font-mono text-sm tracking-widest uppercase bg-transparent hover:bg-white hover:text-black transition-colors duration-500 mt-4"
+                  >
+                    Sign In
+                  </motion.button>
+                </Link>
+              )}
 
               <motion.div
                 initial={{ opacity: 0 }}

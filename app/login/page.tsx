@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { SentientSphere } from "@/components/sentient-sphere"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,15 +11,11 @@ import { Navbar } from "@/components/navbar"
 import { CustomCursor } from "@/components/custom-cursor"
 import { SmoothScroll } from "@/components/smooth-scroll"
 import { ArrowRight } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 
-// Demo credentials
-const DEMO_CREDENTIALS = {
-  email: "demo@eduplatform.com",
-  password: "demo123",
-}
-
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -28,29 +24,31 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false)
   const [error, setError] = useState("")
 
+  useEffect(() => {
+    const errorMsg = searchParams.get("error")
+    if (errorMsg) {
+      setError(errorMsg)
+    }
+  }, [searchParams])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
     setIsLoading(true)
 
-    // Simulate API call
-    setTimeout(() => {
-      // Check demo credentials
-      if (formData.email === DEMO_CREDENTIALS.email && formData.password === DEMO_CREDENTIALS.password) {
-        // Store user data
-        const userData = {
-          name: "Demo User",
-          email: formData.email,
-        }
-        localStorage.setItem("user", JSON.stringify(userData))
-        
-        // Redirect to dashboard
-        router.push("/dashboard")
-      } else {
-        setError("Invalid email or password. Use demo credentials.")
-        setIsLoading(false)
-      }
-    }, 1000)
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithPassword({
+      email: formData.email,
+      password: formData.password,
+    })
+
+    if (error) {
+      setError(error.message)
+      setIsLoading(false)
+    } else {
+      router.push("/dashboard")
+      router.refresh()
+    }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,16 +102,6 @@ export default function LoginPage() {
               >
                 Sign in to your account
               </motion.p>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="mt-4 p-4 border border-accent/20 rounded-lg bg-accent/5"
-              >
-                <p className="font-mono text-xs text-muted-foreground mb-2">Demo Credentials:</p>
-                <p className="font-mono text-xs text-accent">Email: {DEMO_CREDENTIALS.email}</p>
-                <p className="font-mono text-xs text-accent">Password: {DEMO_CREDENTIALS.password}</p>
-              </motion.div>
             </div>
 
             {/* Form */}
@@ -266,6 +254,14 @@ export default function LoginPage() {
         </div>
       </div>
     </SmoothScroll>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   )
 }
 

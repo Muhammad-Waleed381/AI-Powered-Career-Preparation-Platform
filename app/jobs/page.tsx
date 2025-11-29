@@ -31,9 +31,6 @@ export default function JobsPage() {
     }
     const userObj = JSON.parse(userData)
     setUser(userObj)
-    
-    // Auto-discover jobs on mount
-    discoverJobs(userObj.email)
   }, [router])
 
   const discoverJobs = async (email: string, keywords?: string[], loc?: string) => {

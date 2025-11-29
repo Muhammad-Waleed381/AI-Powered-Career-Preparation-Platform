@@ -57,7 +57,7 @@ export function QuestionsBank({ data }: QuestionsBankProps) {
         return (
             <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-4">
-                    <Icon className="w-5 h-5 text-purple-400" />
+                    <Icon className="w-5 h-5 text-accent" />
                     <h4 className="font-mono text-sm tracking-wider">
                         {questions.length} Questions Generated
                     </h4>
@@ -72,7 +72,7 @@ export function QuestionsBank({ data }: QuestionsBankProps) {
                             <AccordionItem
                                 key={questionId}
                                 value={questionId}
-                                className="border border-white/10 rounded-lg bg-background/20 px-5"
+                                className="border border-border/50 rounded-lg bg-card/30 px-5"
                             >
                                 <AccordionTrigger className="hover:no-underline py-4">
                                     <div className="flex items-start gap-3 text-left flex-1">
@@ -101,12 +101,12 @@ export function QuestionsBank({ data }: QuestionsBankProps) {
                                                     onClick={() => toggleHints(questionId)}
                                                     className="flex items-center gap-2 px-3 py-2 rounded-lg border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 transition-colors"
                                                 >
-                                                    <Lightbulb className="w-4 h-4 text-purple-400" />
-                                                    <span className="font-mono text-xs text-purple-400">
+                                                    <Lightbulb className="w-4 h-4 text-accent" />
+                                                    <span className="font-mono text-xs text-accent">
                                                         {revealedHints[questionId] ? "Hide" : "Reveal"} Hints
                                                     </span>
                                                     <ChevronDown
-                                                        className={`w-4 h-4 text-purple-400 transition-transform ${revealedHints[questionId] ? "rotate-180" : ""
+                                                        className={`w-4 h-4 text-accent transition-transform ${revealedHints[questionId] ? "rotate-180" : ""
                                                             }`}
                                                     />
                                                 </button>
@@ -125,9 +125,9 @@ export function QuestionsBank({ data }: QuestionsBankProps) {
                                                                     initial={{ opacity: 0, x: -20 }}
                                                                     animate={{ opacity: 1, x: 0 }}
                                                                     transition={{ delay: idx * 0.1 }}
-                                                                    className="flex items-start gap-2 p-3 rounded-lg bg-background/50 border border-white/5"
+                                                                    className="flex items-start gap-2 p-3 rounded-lg bg-card/50 border border-border/30"
                                                                 >
-                                                                    <span className="text-purple-400 font-mono text-xs mt-0.5">
+                                                                    <span className="text-accent font-mono text-xs mt-0.5">
                                                                         💡
                                                                     </span>
                                                                     <span className="font-mono text-xs text-muted-foreground">
@@ -143,7 +143,7 @@ export function QuestionsBank({ data }: QuestionsBankProps) {
 
                                         {/* Sample Answer */}
                                         {q.sampleAnswer && (
-                                            <div className="p-4 rounded-lg bg-background/50 border border-white/5">
+                                            <div className="p-4 rounded-lg bg-card/50 border border-border/30">
                                                 <h6 className="font-mono text-xs tracking-wider text-green-400 mb-2">
                                                     Sample Answer
                                                 </h6>

@@ -20,7 +20,7 @@ export function ResearchProgress({ currentStep, steps, logs }: ResearchProgressP
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-8 border border-white/10 rounded-lg bg-background/30 backdrop-blur-sm"
+            className="p-8 border border-border/50 rounded-lg bg-card/50 backdrop-blur-sm"
         >
             <div className="mb-6">
                 <p className="font-mono text-xs tracking-[0.3em] text-muted-foreground mb-2">
@@ -42,13 +42,13 @@ export function ResearchProgress({ currentStep, steps, logs }: ResearchProgressP
                                 className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${status === "complete"
                                         ? "border-green-500 bg-green-500/20"
                                         : status === "active"
-                                            ? "border-purple-500 bg-purple-500/20"
-                                            : "border-white/10 bg-background/20"
+                                            ? "border-accent bg-accent/20"
+                                            : "border-border/50 bg-card/30"
                                     }`}
                             >
                                 {Icon &&
                                     (status === "active" ? (
-                                        <Loader2 className="w-4 h-4 text-purple-400 animate-spin" />
+                                        <Loader2 className="w-4 h-4 text-accent animate-spin" />
                                     ) : (
                                         <Check className="w-4 h-4 text-green-400" />
                                     ))}
@@ -59,7 +59,7 @@ export function ResearchProgress({ currentStep, steps, logs }: ResearchProgressP
                                     className={`font-mono text-sm transition-colors ${status === "complete"
                                             ? "text-green-400"
                                             : status === "active"
-                                                ? "text-purple-400"
+                                                ? "text-accent"
                                                 : "text-muted-foreground"
                                         }`}
                                 >
@@ -81,7 +81,7 @@ export function ResearchProgress({ currentStep, steps, logs }: ResearchProgressP
             </div>
 
             {/* Terminal-style Logs */}
-            <div className="border border-white/10 rounded-lg bg-black/50 p-4 max-h-64 overflow-y-auto">
+            <div className="border border-border/50 rounded-lg bg-muted/20 p-4 max-h-64 overflow-y-auto">
                 <p className="font-mono text-xs text-green-400 mb-2">$ ai-research --verbose</p>
                 <div className="space-y-1">
                     {logs.map((log, index) => (
@@ -92,7 +92,7 @@ export function ResearchProgress({ currentStep, steps, logs }: ResearchProgressP
                             transition={{ delay: index * 0.1 }}
                             className="font-mono text-xs text-muted-foreground"
                         >
-                            <span className="text-purple-400">[{new Date().toLocaleTimeString()}]</span> {log}
+                            <span className="text-accent">[{new Date().toLocaleTimeString()}]</span> {log}
                         </motion.p>
                     ))}
                     <motion.span

@@ -15,7 +15,7 @@ export function Hero() {
   const scale = useTransform(scrollYProgress, [0, 0.5], [1, 0.8])
 
   return (
-    <section ref={containerRef} className="relative h-screen w-full overflow-hidden bg-[#050505]">
+    <section ref={containerRef} className="relative h-screen w-full overflow-hidden bg-background">
       {/* 3D Sphere Background */}
       <div className="absolute inset-0">
         <SentientSphere />
@@ -48,7 +48,7 @@ export function Hero() {
             data-cursor-hover
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="relative px-8 py-4 border border-white/20 rounded-full font-mono text-sm tracking-widest uppercase bg-transparent backdrop-blur-sm hover:bg-white hover:text-black transition-colors duration-500"
+            className="relative px-8 py-4 border border-border rounded-full font-mono text-sm tracking-widest uppercase bg-transparent backdrop-blur-sm hover:bg-foreground hover:text-background transition-colors duration-500"
           >
             Get Started
             <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#2563eb] rounded-full animate-pulse" />
@@ -84,7 +84,7 @@ export function Hero() {
           className="flex flex-col items-center gap-2"
         >
           <span className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">Scroll</span>
-          <div className="w-px h-8 bg-gradient-to-b from-white/50 to-transparent" />
+          <div className="w-px h-8 bg-gradient-to-b from-foreground/50 to-transparent" />
         </motion.div>
       </motion.div>
     </section>

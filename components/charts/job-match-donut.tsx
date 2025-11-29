@@ -21,15 +21,15 @@ export function JobMatchDonut({ score }: JobMatchDonutProps) {
                 OVERALL MATCH
             </p>
 
-            <div className="relative w-full h-48">
+            <div className="relative w-full h-80">
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie
                             data={data}
                             cx="50%"
                             cy="50%"
-                            innerRadius={60}
-                            outerRadius={80}
+                            innerRadius={90}
+                            outerRadius={130}
                             paddingAngle={0}
                             dataKey="value"
                             startAngle={90}
@@ -50,8 +50,8 @@ export function JobMatchDonut({ score }: JobMatchDonutProps) {
                         transition={{ duration: 0.8, delay: 0.3 }}
                         className="text-center"
                     >
-                        <p className="text-4xl font-light">{score}%</p>
-                        <p className="font-mono text-[10px] text-muted-foreground mt-1">
+                        <p className="text-5xl font-light">{score}%</p>
+                        <p className="font-mono text-xs text-muted-foreground mt-2">
                             SCORE
                         </p>
                     </motion.div>

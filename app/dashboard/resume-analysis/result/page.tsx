@@ -21,7 +21,6 @@ import {
     Clock,
     ArrowLeft,
 } from "lucide-react"
-import { SentientSphere } from "@/components/sentient-sphere"
 import { CustomCursor } from "@/components/custom-cursor"
 import { SmoothScroll } from "@/components/smooth-scroll"
 import Link from "next/link"
@@ -355,24 +354,20 @@ export default function ResumeResultPage() {
     return (
         <SmoothScroll>
             <CustomCursor />
-            <div className="relative min-h-screen w-full overflow-hidden bg-[#050505]">
-                {/* 3D Sphere Background */}
-                <div className="absolute inset-0 opacity-20">
-                    <SentientSphere />
-                </div>
+            <div className="relative min-h-screen w-full overflow-hidden bg-background">
 
                 {/* Header */}
                 <motion.header
                     initial={{ y: -100 }}
                     animate={{ y: 0 }}
                     transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-                    className="relative z-10 border-b border-white/10 bg-background/40 backdrop-blur-sm"
+                    className="relative z-10 border-b border-border/50 bg-background/80 backdrop-blur-sm"
                 >
                     <div className="flex items-center justify-between px-6 py-4 md:px-12 md:py-5">
                         <div className="flex items-center gap-8">
                             <Link
                                 href="/dashboard/resume-analysis"
-                                className="font-mono text-xs tracking-widest text-foreground font-semibold hover:text-purple-400 transition-colors"
+                                className="font-mono text-xs tracking-widest text-foreground font-semibold hover:text-accent transition-colors"
                             >
                                 ← UPLOAD
                             </Link>
@@ -386,7 +381,7 @@ export default function ResumeResultPage() {
                         <motion.div
                             initial={{ opacity: 0, scale: 0.8 }}
                             animate={{ opacity: isSaved ? 1 : 0.7, scale: 1 }}
-                            className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg"
+                            className="flex items-center gap-2 px-4 py-2 bg-muted/20 border border-border/50 rounded-lg"
                         >
                             <Clock className="w-4 h-4 text-green-400" />
                             <span className="text-xs font-mono text-muted-foreground">
@@ -407,7 +402,7 @@ export default function ResumeResultPage() {
                     >
                         <Link href="/dashboard/resume-analysis">
                             <button
-                                className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors font-mono text-xs"
+                                className="flex items-center gap-2 px-4 py-2 bg-muted/20 hover:bg-muted/40 border border-border/50 rounded-lg transition-colors font-mono text-xs"
                                 data-cursor-hover
                             >
                                 <Upload className="w-4 h-4" />
@@ -433,7 +428,7 @@ export default function ResumeResultPage() {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.5, delay: 0.3 }}
-                                className="p-6 border border-white/10 rounded-lg bg-background/30 backdrop-blur-sm"
+                                className="p-6 border border-border/50 rounded-lg bg-card/50 backdrop-blur-sm"
                             >
                                 <div className="flex items-center gap-3 mb-6">
                                     <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
@@ -480,7 +475,7 @@ export default function ResumeResultPage() {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.5, delay: 0.4 }}
-                                className="p-6 border border-white/10 rounded-lg bg-background/30 backdrop-blur-sm"
+                                className="p-6 border border-border/50 rounded-lg bg-card/50 backdrop-blur-sm"
                             >
                                 <div className="flex items-center gap-3 mb-6">
                                     <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
@@ -498,10 +493,10 @@ export default function ResumeResultPage() {
                                     {(profile.experience || []).map((exp, idx) => (
                                         <div key={idx} className="relative pl-8 border-l-2 border-purple-500/30">
                                             <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-purple-500 border-4 border-[#050505]" />
-                                            <div className="bg-background/50 border border-white/10 rounded-xl p-4 hover:bg-background/70 transition-colors">
+                                            <div className="bg-card/50 border border-border/50 rounded-xl p-4 hover:bg-card/70 transition-colors">
                                                 <div className="mb-2">
                                                     <h3 className="font-semibold text-lg">{exp.title}</h3>
-                                                    <p className="text-sm text-purple-400 font-mono">{exp.company}</p>
+                                                    <p className="text-sm text-accent font-mono">{exp.company}</p>
                                                 </div>
                                                 <p className="text-xs text-muted-foreground font-mono mb-3">
                                                     {exp.startDate} - {exp.endDate} · {exp.location}
@@ -528,7 +523,7 @@ export default function ResumeResultPage() {
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.5, delay: 0.5 }}
-                                    className="p-6 border border-white/10 rounded-lg bg-background/30 backdrop-blur-sm"
+                                    className="p-6 border border-border/50 rounded-lg bg-card/50 backdrop-blur-sm"
                                 >
                                     <div className="flex items-center gap-3 mb-6">
                                         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
@@ -546,10 +541,10 @@ export default function ResumeResultPage() {
                                         {(profile.education || []).map((edu, idx) => (
                                             <div
                                                 key={idx}
-                                                className="bg-background/50 border border-white/10 rounded-xl p-4 hover:bg-background/70 transition-colors"
+                                                className="bg-card/50 border border-border/50 rounded-xl p-4 hover:bg-card/70 transition-colors"
                                             >
                                                 <h3 className="font-semibold">{edu.degree}</h3>
-                                                <p className="text-sm text-purple-400 font-mono mt-1">
+                                                <p className="text-sm text-accent font-mono mt-1">
                                                     {edu.institution}
                                                 </p>
                                                 <p className="text-xs text-muted-foreground font-mono mt-2">
@@ -567,7 +562,7 @@ export default function ResumeResultPage() {
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.5, delay: 0.6 }}
-                                    className="p-6 border border-white/10 rounded-lg bg-background/30 backdrop-blur-sm"
+                                    className="p-6 border border-border/50 rounded-lg bg-card/50 backdrop-blur-sm"
                                 >
                                     <div className="flex items-center gap-3 mb-6">
                                         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
@@ -611,7 +606,7 @@ export default function ResumeResultPage() {
                                 className="bg-gradient-to-br from-purple-500/20 to-blue-500/20 backdrop-blur-sm border border-purple-500/30 rounded-lg p-6"
                             >
                                 <div className="flex items-center gap-3 mb-4">
-                                    <Target className="w-6 h-6 text-purple-400" />
+                                    <Target className="w-6 h-6 text-accent" />
                                     <h3 className="text-lg font-semibold">ATS Readiness</h3>
                                 </div>
                                 <div className="flex items-center justify-center mb-4">
@@ -664,7 +659,7 @@ export default function ResumeResultPage() {
                                     initial={{ opacity: 0, x: 20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ duration: 0.5, delay: 0.4 }}
-                                    className="p-6 border border-white/10 rounded-lg bg-background/30 backdrop-blur-sm"
+                                    className="p-6 border border-border/50 rounded-lg bg-card/50 backdrop-blur-sm"
                                 >
                                     <div className="flex items-center gap-3 mb-4">
                                         <TrendingUp className="w-6 h-6 text-blue-400" />
@@ -696,10 +691,10 @@ export default function ResumeResultPage() {
                                     initial={{ opacity: 0, x: 20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ duration: 0.5, delay: 0.5 }}
-                                    className="p-6 border border-white/10 rounded-lg bg-background/30 backdrop-blur-sm"
+                                    className="p-6 border border-border/50 rounded-lg bg-card/50 backdrop-blur-sm"
                                 >
                                     <div className="flex items-center gap-3 mb-4">
-                                        <Sparkles className="w-6 h-6 text-purple-400" />
+                                        <Sparkles className="w-6 h-6 text-accent" />
                                         <h3 className="text-lg font-semibold">Top Skills</h3>
                                     </div>
                                     <div className="space-y-4">
@@ -719,7 +714,7 @@ export default function ResumeResultPage() {
                                                             {item.level}
                                                         </span>
                                                     </div>
-                                                    <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                                                    <div className="h-2 bg-muted/50 rounded-full overflow-hidden">
                                                         <motion.div
                                                             initial={{ width: 0 }}
                                                             animate={{ width: `${level}%` }}
@@ -739,7 +734,7 @@ export default function ResumeResultPage() {
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ duration: 0.5, delay: 0.6 }}
-                                className="p-6 border border-white/10 rounded-lg bg-background/30 backdrop-blur-sm"
+                                className="p-6 border border-border/50 rounded-lg bg-card/50 backdrop-blur-sm"
                             >
                                 <div className="flex items-center gap-3 mb-4">
                                     <Sparkles className="w-6 h-6 text-blue-400" />

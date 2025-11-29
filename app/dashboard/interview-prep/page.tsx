@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { useRouter } from "next/navigation"
-import { SentientSphere } from "@/components/sentient-sphere"
 import { CustomCursor } from "@/components/custom-cursor"
 import { SmoothScroll } from "@/components/smooth-scroll"
 import { ResearchForm } from "@/components/interview-prep/research-form"
@@ -92,6 +91,23 @@ export default function InterviewPrepPage() {
                 setLogs((logs) => [...logs, "✅ Research complete!"])
                 setResults(result.data)
                 setSessionId(result.sessionId)
+                
+                // Save session to localStorage for dashboard
+                if (user) {
+                    const sessionData = {
+                        company: data.company,
+                        role: data.role,
+                        technologies: data.technologies,
+                        questions: result.data.questions,
+                        created_at: new Date().toISOString(),
+                        sessionId: result.sessionId
+                    }
+                    const existingSessions = localStorage.getItem(`interview_sessions_${user.email}`)
+                    const sessions = existingSessions ? JSON.parse(existingSessions) : []
+                    sessions.unshift(sessionData)
+                    // Keep only last 10 sessions
+                    localStorage.setItem(`interview_sessions_${user.email}`, JSON.stringify(sessions.slice(0, 10)))
+                }
             } else {
                 throw new Error(result.message || "Research failed")
             }
@@ -131,11 +147,7 @@ export default function InterviewPrepPage() {
     return (
         <SmoothScroll>
             <CustomCursor />
-            <div className="relative min-h-screen w-full overflow-hidden bg-[#050505]">
-                {/* 3D Sphere Background */}
-                <div className="absolute inset-0 opacity-20">
-                    <SentientSphere />
-                </div>
+            <div className="relative min-h-screen w-full overflow-hidden bg-background">
 
                 {/* Main Content */}
                 <div className="relative z-10 px-6 py-8 md:px-12 md:py-12 max-w-7xl mx-auto">

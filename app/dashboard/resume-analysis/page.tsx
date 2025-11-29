@@ -190,24 +190,20 @@ export default function ResumeAnalysisPage() {
     return (
         <SmoothScroll>
             <CustomCursor />
-            <div className="relative min-h-screen w-full overflow-hidden bg-[#050505]">
-                {/* 3D Sphere Background */}
-                <div className="absolute inset-0 opacity-20">
-                    <SentientSphere />
-                </div>
+            <div className="relative min-h-screen w-full overflow-hidden bg-background">
 
                 {/* Header */}
                 <motion.header
                     initial={{ y: -100 }}
                     animate={{ y: 0 }}
                     transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-                    className="relative z-10 border-b border-white/10 bg-background/40 backdrop-blur-sm"
+                    className="relative z-10 border-b border-border/50 bg-background/80 backdrop-blur-sm"
                 >
                     <div className="flex items-center justify-between px-6 py-4 md:px-12 md:py-5">
                         <div className="flex items-center gap-8">
                             <Link
                                 href="/dashboard"
-                                className="font-mono text-xs tracking-widest text-foreground font-semibold hover:text-purple-400 transition-colors"
+                                className="font-mono text-xs tracking-widest text-foreground font-semibold hover:text-accent transition-colors"
                             >
                                 ← DASHBOARD
                             </Link>
@@ -253,7 +249,7 @@ export default function ResumeAnalysisPage() {
                         )}
                         
                         {/* Upload Section */}
-                        <div className="p-6 border border-white/10 rounded-lg bg-background/30 backdrop-blur-sm mb-6">
+                        <div className="p-6 border border-border/50 rounded-lg bg-card/50 backdrop-blur-sm mb-6">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
                                     <Upload className="w-5 h-5 text-white" />
@@ -277,7 +273,7 @@ export default function ResumeAnalysisPage() {
                                         className={`relative block w-full cursor-pointer transition-all duration-300 border-2 border-dashed rounded-xl p-12 ${
                                             isDragging
                                                 ? "border-purple-500 bg-purple-500/10 scale-[1.02]"
-                                                : "border-white/20 hover:border-purple-500/50 hover:bg-white/5"
+                                                : "border-border hover:border-accent/50 hover:bg-muted/30"
                                         }`}
                                     >
                                         <input
@@ -297,7 +293,7 @@ export default function ResumeAnalysisPage() {
                                                 transition={{ duration: 0.2 }}
                                                 className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center"
                                             >
-                                                <Upload className="w-8 h-8 text-purple-400" />
+                                                <Upload className="w-8 h-8 text-accent" />
                                             </motion.div>
 
                                             <div className="text-center">
@@ -345,10 +341,10 @@ export default function ResumeAnalysisPage() {
                                     className="space-y-4"
                                 >
                                     {/* File Preview Card */}
-                                    <div className="bg-background/50 border border-white/10 rounded-xl p-6">
+                                    <div className="bg-card/50 border border-border/50 rounded-xl p-6">
                                         <div className="flex items-start gap-4">
                                             {/* PDF Thumbnail Preview */}
-                                            <div className="flex-shrink-0 w-24 h-32 bg-white/10 rounded-lg border border-white/20 overflow-hidden">
+                                            <div className="flex-shrink-0 w-24 h-32 bg-muted/30 rounded-lg border border-border/50 overflow-hidden">
                                                 {previewUrl ? (
                                                     <iframe
                                                         src={`${previewUrl}#page=1&view=FitH`}
@@ -384,7 +380,7 @@ export default function ResumeAnalysisPage() {
                                                     <div className="flex items-center gap-2">
                                                         <label
                                                             htmlFor="file-replace"
-                                                            className="px-4 py-2 text-xs font-mono bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors cursor-pointer"
+                                                            className="px-4 py-2 text-xs font-mono bg-muted/20 hover:bg-muted/40 border border-border/50 rounded-lg transition-colors cursor-pointer"
                                                         >
                                                             Replace
                                                             <input
@@ -397,7 +393,7 @@ export default function ResumeAnalysisPage() {
                                                         </label>
                                                         <button
                                                             onClick={handleDelete}
-                                                            className="p-2 text-red-400 hover:bg-red-500/10 border border-white/10 rounded-lg transition-colors"
+                                                            className="p-2 text-destructive hover:bg-destructive/10 border border-border/50 rounded-lg transition-colors"
                                                             aria-label="Delete file"
                                                         >
                                                             <X className="w-4 h-4" />

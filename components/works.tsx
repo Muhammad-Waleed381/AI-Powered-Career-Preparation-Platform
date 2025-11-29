@@ -73,7 +73,7 @@ export function Works() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: index * 0.1 }}
-            className="relative border-t border-white/10 py-8 md:py-12"
+            className="relative border-t border-border/50 py-8 md:py-12"
             onMouseEnter={() => setHoveredIndex(index)}
             onMouseLeave={() => setHoveredIndex(null)}
           >
@@ -89,7 +89,7 @@ export function Works() {
 
               {/* Title */}
               <motion.h3
-                className="font-sans text-4xl md:text-6xl lg:text-7xl font-light tracking-tight group-hover:text-white/70 transition-colors duration-300 flex-1"
+                className="font-sans text-4xl md:text-6xl lg:text-7xl font-light tracking-tight group-hover:text-foreground/70 transition-colors duration-300 flex-1"
                 animate={{
                   x: hoveredIndex === index ? 20 : 0,
                 }}
@@ -103,7 +103,7 @@ export function Works() {
                 {project.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="font-mono text-[10px] tracking-wider px-3 py-1 border border-white/20 rounded-full text-muted-foreground"
+                    className="font-mono text-[10px] tracking-wider px-3 py-1 border border-border/50 rounded-full text-muted-foreground"
                   >
                     {tag}
                   </span>
@@ -147,7 +147,7 @@ export function Works() {
       </div>
 
       {/* Bottom Border */}
-      <div className="border-t border-white/10" />
+      <div className="border-t border-border/50" />
     </section>
   )
 }

@@ -2,19 +2,56 @@
 
 import { motion } from "framer-motion"
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
+import { JobMatch } from "@/lib/job-matching-service"
 
-const data = [
-    { date: "30/10", score: 87 },
-    { date: "31/10", score: 85 },
-    { date: "01/11", score: 89 },
-    { date: "02/11", score: 92 },
-    { date: "03/11", score: 90 },
-    { date: "04/11", score: 88 },
-    { date: "05/11", score: 91 },
-]
+interface MatchTrendChartProps {
+    jobs?: JobMatch[]
+}
 
-export function MatchTrendChart() {
-    const currentScore = data[data.length - 1].score
+export function MatchTrendChart({ jobs = [] }: MatchTrendChartProps) {
+    const getTrendData = () => {
+        if (!jobs || jobs.length === 0) {
+            // Return empty data if no jobs
+            return []
+        }
+
+        // Sort jobs by match score and create trend data
+        const sortedJobs = [...jobs]
+            .sort((a, b) => b.matchScore - a.matchScore)
+            .slice(0, 7)
+            .reverse()
+
+        return sortedJobs.map((job, index) => {
+            const date = new Date()
+            date.setDate(date.getDate() - (sortedJobs.length - index - 1))
+            return {
+                date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                score: job.matchScore
+            }
+        })
+    }
+
+    const data = getTrendData()
+    const hasData = data.length > 0
+    const currentScore = hasData ? data[data.length - 1].score : 0
+    const previousScore = hasData && data.length > 1 ? data[data.length - 2].score : currentScore
+    const scoreChange = currentScore - previousScore
+
+    if (!hasData) {
+        return (
+            <div className="relative h-full flex flex-col items-center justify-center">
+                <p className="font-mono text-xs tracking-[0.3em] text-muted-foreground mb-4">
+                    MATCH SCORE TREND
+                </p>
+                <p className="font-mono text-xs text-muted-foreground">
+                    Discover jobs to see match trends
+                </p>
+            </div>
+        )
+    }
+
+    const minScore = Math.max(0, Math.min(...data.map(d => d.score)) - 10)
+    const maxScore = Math.min(100, Math.max(...data.map(d => d.score)) + 10)
 
     return (
         <div className="relative h-full">
@@ -32,12 +69,16 @@ export function MatchTrendChart() {
                         >
                             {currentScore}%
                         </motion.p>
-                        <span className="font-mono text-xs text-green-500">+5% ↑</span>
+                        {scoreChange !== 0 && (
+                            <span className={`font-mono text-xs ${scoreChange > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                {scoreChange > 0 ? '+' : ''}{scoreChange}% {scoreChange > 0 ? '↑' : '↓'}
+                            </span>
+                        )}
                     </div>
                 </div>
             </div>
 
-            <div className="h-64">
+            <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={data}>
                         <defs>
@@ -49,33 +90,33 @@ export function MatchTrendChart() {
                         <XAxis
                             dataKey="date"
                             stroke="#71717a"
-                            fontSize={10}
+                            fontSize={12}
                             fontFamily="monospace"
                             tickLine={false}
                             axisLine={false}
                         />
                         <YAxis
                             stroke="#71717a"
-                            fontSize={10}
+                            fontSize={12}
                             fontFamily="monospace"
                             tickLine={false}
                             axisLine={false}
-                            domain={[80, 95]}
+                            domain={[minScore, maxScore]}
                         />
                         <Tooltip
                             contentStyle={{
-                                backgroundColor: "#18181b",
-                                border: "1px solid #27272a",
+                                backgroundColor: "hsl(var(--popover))",
+                                border: "1px solid hsl(var(--border))",
                                 borderRadius: "8px",
                                 fontFamily: "monospace",
-                                fontSize: "11px",
+                                fontSize: "12px",
                             }}
                         />
                         <Area
                             type="monotone"
                             dataKey="score"
                             stroke="#8b5cf6"
-                            strokeWidth={2}
+                            strokeWidth={3}
                             fill="url(#scoreGradient)"
                         />
                     </AreaChart>
@@ -83,7 +124,7 @@ export function MatchTrendChart() {
             </div>
 
             <p className="font-mono text-xs text-muted-foreground mt-4 text-center">
-                Last 7 days • Updated as you improve your profile
+                Top {data.length} job matches • Based on your profile
             </p>
         </div>
     )

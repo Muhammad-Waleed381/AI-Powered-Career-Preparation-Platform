@@ -38,7 +38,7 @@ export function JobCard({ match, index }: JobCardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.1 }}
     >
-      <Card className="relative p-5 border border-white/10 rounded-lg bg-background/30 backdrop-blur-sm hover:bg-background/50 hover:border-white/20 transition-all duration-300 group h-full flex flex-col">
+      <Card className="relative p-5 border border-border/50 rounded-lg bg-card/50 backdrop-blur-sm hover:bg-card/70 hover:border-border transition-all duration-300 group h-full flex flex-col">
         {/* Match Score Badge */}
         <div className={`absolute top-3 right-3 px-2.5 py-1 rounded-full border ${getScoreBgColor(matchScore)}`}>
           <div className="flex items-center gap-1.5">
@@ -57,7 +57,7 @@ export function JobCard({ match, index }: JobCardProps) {
             rel="noopener noreferrer"
             className="block"
           >
-            <h3 className="font-sans text-lg font-semibold mb-2 group-hover:text-purple-400 transition-colors cursor-pointer hover:underline line-clamp-2">
+            <h3 className="font-sans text-lg font-semibold mb-2 group-hover:text-accent transition-colors cursor-pointer hover:underline line-clamp-2">
               {job.title}
             </h3>
           </a>
@@ -66,7 +66,7 @@ export function JobCard({ match, index }: JobCardProps) {
               href={job.companyUrl || `https://www.google.com/search?q=${encodeURIComponent(job.company)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 hover:text-purple-400 transition-colors cursor-pointer"
+              className="flex items-center gap-1 hover:text-accent transition-colors cursor-pointer"
               data-cursor-hover
             >
               <Briefcase className="w-3.5 h-3.5" />
@@ -88,7 +88,7 @@ export function JobCard({ match, index }: JobCardProps) {
         </div>
 
         {/* Match Explanation */}
-        <div className="mb-3 p-2.5 rounded-lg bg-background/50 border border-white/5">
+        <div className="mb-3 p-2.5 rounded-lg bg-muted/20 border border-border/30">
           <p className="font-mono text-[10px] text-muted-foreground leading-relaxed line-clamp-2">
             {explanation}
           </p>
@@ -154,7 +154,7 @@ export function JobCard({ match, index }: JobCardProps) {
         )}
 
         {/* Actions */}
-        <div className="mt-auto pt-3 border-t border-white/5">
+        <div className="mt-auto pt-3 border-t border-border/30">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
               <span className="font-mono">Source:</span>
@@ -174,7 +174,7 @@ export function JobCard({ match, index }: JobCardProps) {
                 href={job.applyUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-purple-500/50 bg-purple-500/10 hover:bg-purple-500/20 hover:border-purple-500 transition-all duration-300 font-mono text-[10px] text-purple-400"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-accent/50 bg-accent/10 hover:bg-accent/20 hover:border-accent transition-all duration-300 font-mono text-[10px] text-accent"
                 data-cursor-hover
               >
                 <span>Apply</span>
@@ -186,14 +186,14 @@ export function JobCard({ match, index }: JobCardProps) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/10 hover:bg-white/10 hover:border-purple-500/50 transition-all duration-300 font-mono text-[10px]"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border/50 hover:bg-muted/50 hover:border-accent/50 transition-all duration-300 font-mono text-[10px]"
                   data-cursor-hover
                 >
                   <span>Links</span>
                   <Link2 className="w-3 h-3" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-background/95 backdrop-blur-sm border-white/10">
+              <DropdownMenuContent align="end" className="bg-popover/95 backdrop-blur-sm border-border/50">
                 <DropdownMenuItem asChild>
                   <a
                     href={job.url}

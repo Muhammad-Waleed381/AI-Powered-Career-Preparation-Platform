@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { useRouter } from "next/navigation"
 import { Search, Loader2, Filter, RefreshCw } from "lucide-react"
-import { SentientSphere } from "@/components/sentient-sphere"
 import { CustomCursor } from "@/components/custom-cursor"
 import { SmoothScroll } from "@/components/smooth-scroll"
 import { JobCard } from "@/components/job-card"
@@ -32,9 +31,6 @@ export default function JobPage() {
     }
     const userObj = JSON.parse(userData)
     setUser(userObj)
-    
-    // Auto-discover jobs on mount
-    discoverJobs(userObj.email)
   }, [router])
 
   const discoverJobs = async (email: string, keywords?: string[], loc?: string) => {
@@ -168,7 +164,9 @@ export default function JobPage() {
       const data = await response.json()
       setJobs(data.jobs || [])
       
+      // Save jobs to localStorage for dashboard
       if (data.jobs && data.jobs.length > 0) {
+        localStorage.setItem(`jobs_${email}`, JSON.stringify(data.jobs))
         toast.success(`Found ${data.jobs.length} job matches!`)
       } else {
         toast.info("No jobs found. Try adjusting your search criteria or upload your resume.")
@@ -213,18 +211,13 @@ export default function JobPage() {
   return (
     <SmoothScroll>
       <CustomCursor />
-      <div className="relative min-h-screen w-full overflow-hidden bg-[#050505]">
-        {/* 3D Sphere Background */}
-        <div className="absolute inset-0 opacity-20">
-          <SentientSphere />
-        </div>
-
+      <div className="relative min-h-screen w-full overflow-hidden bg-background">
         {/* Header */}
         <motion.header
           initial={{ y: -100 }}
           animate={{ y: 0 }}
           transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="relative z-10 border-b border-white/10 bg-background/40 backdrop-blur-sm"
+          className="relative z-10 border-b border-border/50 bg-background/80 backdrop-blur-sm"
         >
           <div className="flex items-center justify-between px-6 py-4 md:px-12 md:py-5">
             <div className="flex items-center gap-8">
@@ -247,7 +240,7 @@ export default function JobPage() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="mb-6"
           >
-            <div className="p-6 border border-white/10 rounded-lg bg-background/30 backdrop-blur-sm">
+            <div className="p-6 border border-border/50 rounded-lg bg-card/50 backdrop-blur-sm">
               <div className="flex items-center justify-between mb-4">
                 <p className="font-mono text-xs tracking-[0.3em] text-muted-foreground">
                   SEARCH JOBS
@@ -269,7 +262,7 @@ export default function JobPage() {
                     placeholder="React, Node.js, TypeScript"
                     value={searchKeywords}
                     onChange={(e) => setSearchKeywords(e.target.value)}
-                    className="bg-background/50 border-white/10"
+                    className="bg-card/50 border-border/50"
                   />
                 </div>
                 <div>
@@ -281,7 +274,7 @@ export default function JobPage() {
                     placeholder="Remote, New York, etc."
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
-                    className="bg-background/50 border-white/10"
+                    className="bg-card/50 border-border/50"
                   />
                 </div>
                 <div>
@@ -295,7 +288,7 @@ export default function JobPage() {
                     placeholder="0"
                     value={filterScore}
                     onChange={(e) => setFilterScore(Number(e.target.value))}
-                    className="bg-background/50 border-white/10"
+                    className="bg-card/50 border-border/50"
                   />
                 </div>
               </div>
@@ -340,7 +333,7 @@ export default function JobPage() {
           {loading && jobs.length === 0 ? (
             <div className="flex items-center justify-center py-20">
               <div className="text-center">
-                <Loader2 className="w-12 h-12 animate-spin text-purple-400 mx-auto mb-4" />
+                <Loader2 className="w-12 h-12 animate-spin text-accent mx-auto mb-4" />
                 <p className="font-mono text-sm text-muted-foreground">
                   Discovering jobs...
                 </p>

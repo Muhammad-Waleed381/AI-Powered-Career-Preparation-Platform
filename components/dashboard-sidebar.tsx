@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
     LayoutDashboard,
@@ -13,6 +13,7 @@ import {
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 const menuItems = [
     {
@@ -39,7 +40,28 @@ const menuItems = [
 
 export function DashboardSidebar() {
     const [isCollapsed, setIsCollapsed] = useState(false)
+    const [isMounted, setIsMounted] = useState(false)
     const pathname = usePathname()
+
+    // Load collapsed state from localStorage on mount
+    useEffect(() => {
+        const savedState = localStorage.getItem("sidebarCollapsed")
+        if (savedState !== null) {
+            setIsCollapsed(savedState === "true")
+        }
+        setIsMounted(true)
+    }, [])
+
+    // Save collapsed state to localStorage whenever it changes
+    useEffect(() => {
+        if (isMounted) {
+            localStorage.setItem("sidebarCollapsed", String(isCollapsed))
+        }
+    }, [isCollapsed, isMounted])
+
+    const handleToggle = () => {
+        setIsCollapsed(!isCollapsed)
+    }
 
     return (
         <motion.aside
@@ -51,14 +73,14 @@ export function DashboardSidebar() {
                 duration: 0.3,
                 ease: [0.25, 0.46, 0.45, 0.94],
             }}
-            className="relative border-r border-white/10 bg-background/40 backdrop-blur-sm"
+            className="relative border-r border-border bg-background/40 backdrop-blur-sm"
         >
             <div className="flex h-full flex-col">
                 {/* Toggle Button */}
                 <div className="flex items-center justify-end p-4">
                     <button
-                        onClick={() => setIsCollapsed(!isCollapsed)}
-                        className="rounded-lg border border-white/10 p-2 hover:bg-white/5 transition-colors"
+                        onClick={handleToggle}
+                        className="rounded-lg border border-border p-2 hover:bg-accent/10 transition-colors"
                         data-cursor-hover
                     >
                         {isCollapsed ? (
@@ -82,8 +104,8 @@ export function DashboardSidebar() {
                                     className={cn(
                                         "flex items-center gap-3 rounded-lg px-3 py-3 transition-all duration-200",
                                         isActive
-                                            ? "bg-white/10 text-foreground"
-                                            : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
+                                            ? "bg-accent/20 text-foreground"
+                                            : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
                                     )}
                                     data-cursor-hover
                                 >
@@ -107,8 +129,32 @@ export function DashboardSidebar() {
                     })}
                 </nav>
 
+                {/* Theme Toggle */}
+                <div className="border-t border-border/50 p-4">
+                    <div
+                        className={cn(
+                            "flex items-center",
+                            isCollapsed ? "justify-center" : "justify-between"
+                        )}
+                    >
+                        {!isCollapsed && (
+                            <AnimatePresence mode="wait">
+                                <motion.span
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    className="font-mono text-xs text-muted-foreground"
+                                >
+                                    Theme
+                                </motion.span>
+                            </AnimatePresence>
+                        )}
+                        <ThemeToggle />
+                    </div>
+                </div>
+
                 {/* User Profile Section at Bottom */}
-                <div className="border-t border-white/10 p-4">
+                <div className="border-t border-border/50 p-4">
                     <div
                         className={cn(
                             "flex items-center gap-3",

@@ -68,7 +68,7 @@ export function CompanyInsights({ data }: CompanyInsightsProps) {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.1 }}
                         >
-                            <Card className="p-5 bg-background/30 border-white/10 hover:bg-background/40 transition-all h-full">
+                            <Card className="p-5 bg-card/50 border-border/50 hover:bg-card/70 transition-all h-full">
                                 <div className="flex items-center gap-3 mb-4">
                                     <div className={`p-2 rounded-lg bg-${section.color}-500/20 border border-${section.color}-500/30`}>
                                         <Icon className={`w-4 h-4 text-${section.color}-400`} />

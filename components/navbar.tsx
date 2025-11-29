@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 const navLinks = [
   { label: "Features", href: "#features" },
@@ -91,8 +92,11 @@ export function Navbar() {
             ))}
           </ul>
 
-          {/* Right Side - Status & Sign In */}
+          {/* Right Side - Theme Toggle, Status & Sign In */}
           <div className="hidden md:flex items-center gap-6">
+            {/* Theme Toggle */}
+            <ThemeToggle />
+
             {/* Status Indicator */}
             <div className="flex items-center gap-3">
               <span className="relative flex h-2 w-2">
@@ -108,7 +112,7 @@ export function Navbar() {
                 data-cursor-hover
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="relative px-6 py-2.5 border border-white/20 rounded-full font-mono text-xs tracking-widest uppercase bg-transparent backdrop-blur-sm hover:bg-white hover:text-black transition-colors duration-500"
+                className="relative px-6 py-2.5 border border-border rounded-full font-mono text-xs tracking-widest uppercase bg-transparent backdrop-blur-sm hover:bg-foreground hover:text-background transition-colors duration-500"
               >
                 Sign In
               </motion.button>
@@ -163,14 +167,25 @@ export function Navbar() {
                 </motion.button>
               ))}
 
+              {/* Mobile Theme Toggle */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ delay: 0.3 }}
+                className="mt-4"
+              >
+                <ThemeToggle />
+              </motion.div>
+
               {/* Mobile Sign In Button */}
               <Link href="/login" onClick={() => setIsMenuOpen(false)}>
                 <motion.button
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 20 }}
-                  transition={{ delay: 0.3 }}
-                  className="px-8 py-3 border border-white/20 rounded-full font-mono text-sm tracking-widest uppercase bg-transparent hover:bg-white hover:text-black transition-colors duration-500 mt-4"
+                  transition={{ delay: 0.35 }}
+                  className="px-8 py-3 border border-border rounded-full font-mono text-sm tracking-widest uppercase bg-transparent hover:bg-foreground hover:text-background transition-colors duration-500 mt-4"
                 >
                   Sign In
                 </motion.button>

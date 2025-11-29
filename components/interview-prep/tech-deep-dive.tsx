@@ -39,7 +39,7 @@ export function TechDeepDive({ data }: TechDeepDiveProps) {
                     <AccordionItem
                         key={tech.name}
                         value={tech.name}
-                        className="border border-white/10 rounded-lg bg-background/30 px-6"
+                        className="border border-border/50 rounded-lg bg-card/50 px-6"
                     >
                         <AccordionTrigger className="hover:no-underline py-4">
                             <div className="flex items-center gap-3">
@@ -104,8 +104,8 @@ export function TechDeepDive({ data }: TechDeepDiveProps) {
                             {tech.resources && tech.resources.length > 0 && (
                                 <div>
                                     <div className="flex items-center gap-2 mb-3">
-                                        <ExternalLink className="w-4 h-4 text-purple-400" />
-                                        <h5 className="font-mono text-xs tracking-wider text-purple-400">
+                                        <ExternalLink className="w-4 h-4 text-accent" />
+                                        <h5 className="font-mono text-xs tracking-wider text-accent">
                                             Resources
                                         </h5>
                                     </div>
@@ -118,9 +118,9 @@ export function TechDeepDive({ data }: TechDeepDiveProps) {
                                                 rel="noopener noreferrer"
                                                 className="flex items-start gap-2 p-2 rounded-lg hover:bg-background/50 transition-colors group"
                                             >
-                                                <span className="text-purple-400 mt-1">🔗</span>
+                                                <span className="text-accent mt-1">🔗</span>
                                                 <div className="flex-1">
-                                                    <span className="font-mono text-xs text-foreground group-hover:text-purple-400 transition-colors">
+                                                    <span className="font-mono text-xs text-foreground group-hover:text-accent transition-colors">
                                                         {resource.title}
                                                     </span>
                                                     <Badge variant="outline" className="font-mono text-[9px] ml-2">

@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next"
 import { Playfair_Display, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { Toaster } from "@/components/ui/sonner"
+import { ThemeProvider } from "@/components/theme-provider"
 import "./globals.css"
 
 const playfair = Playfair_Display({
@@ -31,12 +32,19 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${playfair.variable} ${geistMono.variable}`}>
+    <html lang="en" className={`${playfair.variable} ${geistMono.variable}`} suppressHydrationWarning>
       <body className="font-sans antialiased overflow-x-hidden">
-        <div className="noise-overlay" />
-        {children}
-        <Analytics />
-        <Toaster />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange={false}
+        >
+          <div className="noise-overlay" />
+          {children}
+          <Analytics />
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   )

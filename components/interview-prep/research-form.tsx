@@ -47,7 +47,7 @@ export function ResearchForm({ onSubmit, isLoading }: ResearchFormProps) {
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-8 border border-white/10 rounded-lg bg-background/30 backdrop-blur-sm"
+            className="p-8 border border-border/50 rounded-lg bg-card/50 backdrop-blur-sm"
         >
             <div className="mb-6">
                 <p className="font-mono text-xs tracking-[0.3em] text-muted-foreground mb-2">
@@ -72,7 +72,7 @@ export function ResearchForm({ onSubmit, isLoading }: ResearchFormProps) {
                         value={company}
                         onChange={(e) => setCompany(e.target.value)}
                         placeholder="e.g., Google, Meta, Amazon"
-                        className="bg-background/50 border-white/10"
+                        className="bg-card/50 border-border/50"
                         disabled={isLoading}
                         required
                     />
@@ -88,7 +88,7 @@ export function ResearchForm({ onSubmit, isLoading }: ResearchFormProps) {
                         value={role}
                         onChange={(e) => setRole(e.target.value)}
                         placeholder="e.g., Senior Frontend Engineer"
-                        className="bg-background/50 border-white/10"
+                        className="bg-card/50 border-border/50"
                         disabled={isLoading}
                         required
                     />
@@ -106,7 +106,7 @@ export function ResearchForm({ onSubmit, isLoading }: ResearchFormProps) {
                             onChange={(e) => setTechInput(e.target.value)}
                             onKeyPress={handleKeyPress}
                             placeholder="e.g., React, Node.js, TypeScript"
-                            className="bg-background/50 border-white/10"
+                            className="bg-card/50 border-border/50"
                             disabled={isLoading}
                         />
                         <Button
@@ -131,7 +131,7 @@ export function ResearchForm({ onSubmit, isLoading }: ResearchFormProps) {
                                     exit={{ scale: 0 }}
                                     className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-500/20 border border-purple-500/30"
                                 >
-                                    <span className="font-mono text-xs text-purple-300">{tech}</span>
+                                    <span className="font-mono text-xs text-accent">{tech}</span>
                                     <button
                                         type="button"
                                         onClick={() => handleRemoveTech(tech)}

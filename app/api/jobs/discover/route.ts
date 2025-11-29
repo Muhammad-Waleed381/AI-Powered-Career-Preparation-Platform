@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getProfileByEmail } from '@/lib/resume-db-service';
-import { searchJobs, generateSearchKeywords } from '@/lib/job-scraping-service';
+import { searchJobs, generateSearchKeywords, generateBroadSearchQueries } from '@/lib/job-scraping-service';
 import { matchJobsWithProfile } from '@/lib/job-matching-service';
 import { UserProfile } from '@/lib/resume-ai-service';
 
@@ -85,29 +85,34 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    // Convert database profile to UserProfile format
+    // Convert database profile to UserProfile format (with null safety)
     const userProfile: UserProfile = {
       personalInfo: {
-        name: profile.full_name,
-        email: profile.email,
+        name: profile.full_name || '',
+        email: profile.email || '',
         phone: profile.phone || '',
         location: profile.location || '',
-        linkedin: profile.linkedin_url,
-        github: profile.github_url,
-        portfolio: profile.portfolio_url,
+        linkedin: profile.linkedin_url || undefined,
+        github: profile.github_url || undefined,
+        portfolio: profile.portfolio_url || undefined,
       },
       summary: profile.summary || '',
-      skills: profile.skills || {
-        technical: [],
-        languages: [],
-        frameworks: [],
-        tools: [],
-        soft: [],
+      skills: {
+        technical: Array.isArray(profile.skills?.technical) ? profile.skills.technical : [],
+        languages: Array.isArray(profile.skills?.languages) ? profile.skills.languages : [],
+        frameworks: Array.isArray(profile.skills?.frameworks) ? profile.skills.frameworks : [],
+        tools: Array.isArray(profile.skills?.tools) ? profile.skills.tools : [],
+        soft: Array.isArray(profile.skills?.soft) ? profile.skills.soft : [],
       },
-      experience: profile.experience || [],
-      education: profile.education || [],
-      certifications: profile.certifications || [],
-      projects: profile.projects || [],
+      experience: Array.isArray(profile.experience) ? profile.experience.map((exp: any) => ({
+        ...exp,
+        technologies: Array.isArray(exp.technologies) ? exp.technologies : [],
+        responsibilities: Array.isArray(exp.responsibilities) ? exp.responsibilities : [],
+        achievements: Array.isArray(exp.achievements) ? exp.achievements : [],
+      })) : [],
+      education: Array.isArray(profile.education) ? profile.education : [],
+      certifications: Array.isArray(profile.certifications) ? profile.certifications : [],
+      projects: Array.isArray(profile.projects) ? profile.projects : [],
     };
 
     // Generate search keywords from profile or use provided keywords
@@ -122,10 +127,16 @@ export async function POST(request: NextRequest) {
       const frameworks = userProfile.skills?.frameworks || [];
       const tools = userProfile.skills?.tools || [];
       
-      if (technicalSkills.length > 0 || frameworks.length > 0 || tools.length > 0 || userProfile.experience.length > 0) {
+      const experienceArray = Array.isArray(userProfile.experience) ? userProfile.experience : [];
+      
+      if (technicalSkills.length > 0 || frameworks.length > 0 || tools.length > 0 || experienceArray.length > 0) {
         searchKeywords = generateSearchKeywords({
-          skills: userProfile.skills,
-          experience: userProfile.experience,
+          skills: {
+            technical: Array.isArray(userProfile.skills?.technical) ? userProfile.skills.technical : [],
+            frameworks: Array.isArray(userProfile.skills?.frameworks) ? userProfile.skills.frameworks : [],
+            tools: Array.isArray(userProfile.skills?.tools) ? userProfile.skills.tools : [],
+          },
+          experience: experienceArray,
         });
         console.log('Generated keywords from profile:', searchKeywords);
       } else {
@@ -153,12 +164,26 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('Searching jobs with keywords:', searchKeywords);
+    console.log(`Using broad search strategy to find more jobs (target: ${maxResults})`);
 
-    // Search for jobs
+    // Search for jobs with increased maxResults for broader coverage
+    // Request more jobs since we're doing multiple searches
+    const broadMaxResults = Math.max(maxResults * 2, 50); // Get more jobs for broader coverage
     let jobs = [];
     try {
-      jobs = await searchJobs(searchKeywords, location, maxResults);
-      console.log(`Found ${jobs.length} jobs`);
+      jobs = await searchJobs(searchKeywords, location, broadMaxResults);
+      console.log(`Found ${jobs.length} jobs using broad search strategy`);
+      
+      // If no jobs found, return empty array with a helpful message
+      if (jobs.length === 0) {
+        console.log('No jobs found - returning empty result');
+        return NextResponse.json({
+          success: true,
+          jobs: [],
+          total: 0,
+          message: 'No jobs found for the given criteria. Try adjusting your search keywords or location.',
+        });
+      }
     } catch (searchError) {
       console.error('Job search error:', searchError);
       const errorMessage = searchError instanceof Error ? searchError.message : 'Unknown error';
@@ -173,7 +198,14 @@ export async function POST(request: NextRequest) {
         );
       }
       
-      throw searchError; // Re-throw other errors
+      // For other errors, return empty result instead of failing
+      console.warn('Job search failed, returning empty result:', errorMessage);
+      return NextResponse.json({
+        success: true,
+        jobs: [],
+        total: 0,
+        message: 'Unable to search jobs at this time. Please try again later or use manual keywords.',
+      });
     }
 
     // Match jobs with user profile
